@@ -32,14 +32,69 @@
 #define FONT_LOCATION "./font/Chango-Regular.ttf"
 #define FONT_SIZE 7
 #define FONT_COLOR spGetRGB(255,255,255)
-#define BACKGROUND_COLOR spGetRGB(0,0,128)
+#define BACKGROUND_COLOR spGetRGB(0,64,0)
 #define EDIT_BACKGROUND_COLOR spGetRGB(255,255,255)
+#define EDIT_TEXT_COLOR spGetRGB(0,32,0)
 #define EDIT_LINE_COLOR spGetRGB(220,220,220)
 #define SELECTED_BACKGROUND_COLOR spGetRGB(185,185,100)
 
+typedef struct sFont *pFont;
+typedef struct sFont {
+	char name[256];
+	char location[256];
+	pFont next;
+} tFont;
+
+pFont firstFont = NULL;
+pFont selectedFont = NULL;
+int fontSize = 8;
+int exit_now = 0;
 SDL_Surface* screen;
 SDL_Surface* editSurface = NULL;
 spFontPointer font = NULL;
+spFontPointer textFont = NULL;
+
+
+void resize(Uint16 w,Uint16 h);
+
+#include "menu.c"
+
+void load_fonts()
+{
+	spFileListPointer result;
+	spFileGetDirectory(&result,"./font",0,0);
+	spFileListPointer directory = result;
+	while (directory)
+	{
+		if (directory->type == SP_FILE_DIRECTORY)
+		{
+			spFileListPointer subresult;
+			spFileGetDirectory(&subresult,directory->name,0,0);
+			spFileListPointer file = subresult;
+			while (file)
+			{
+				if (strcmp(&file->name[strlen(file->name)-4],".ttf") == 0)
+				{
+					pFont font = (pFont)malloc(sizeof(tFont));
+					char without_ttf[256];
+					sprintf(without_ttf,"%s",file->name);
+					without_ttf[strlen(without_ttf)-4] = 0;
+					if (strcmp(&without_ttf[strlen(without_ttf)-8],"-Regular") == 0)
+						without_ttf[strlen(without_ttf)-8] = 0;
+					sprintf(font->name,"%s",&without_ttf[strlen(directory->name)+1]);
+					sprintf(font->location,"%s",file->name);
+					font->next = firstFont;
+					firstFont = font;
+				}
+				file = file->next;
+			}
+			spFileDeleteList(subresult);
+		}
+		directory = directory->next;
+	}
+	spFileDeleteList(result);
+	selectedFont = firstFont;
+}
 
 void draw( void )
 {
@@ -48,16 +103,20 @@ void draw( void )
 	spClearTarget( EDIT_BACKGROUND_COLOR );
 	int i;
 	int pattern = 0b11001100;
-	spSetPattern8(pattern,pattern,pattern,pattern,pattern,pattern,pattern,pattern);
-	for (i = 0; i < editSurface->h; i+=font->maxheight)
-		spLine(0,i,0,screen->w,i,0,EDIT_LINE_COLOR);
-	spDeactivatePattern();
+	spLetterPointer letter = spFontGetLetter(textFont,'A');
+	for (i = 2; i < editSurface->h; i+=textFont->maxheight+2)
+	{
+		spSetPattern8(pattern,pattern,pattern,pattern,pattern,pattern,pattern,pattern);
+		spLine(0,i+letter->height,0,screen->w,i+letter->height,0,EDIT_LINE_COLOR);
+		spDeactivatePattern();
+		spFontDraw(0,i,0,"Testtext",textFont);
+	}
 	//drawing all
 	spSelectRenderTarget(spGetWindowSurface());
 	spClearTarget( BACKGROUND_COLOR );
 	spBlitSurface( screen->w/2,screen->h/2,0,editSurface);
-	spFontDrawMiddle(screen->w/2,0,0,SP_BUTTON_START_NAME": File Menu",font);
-	spFontDrawRight(screen->w,0,0,SP_BUTTON_SELECT_NAME": Extras",font);
+	spFontDrawMiddle(screen->w/2,0,0,SP_BUTTON_START_NAME": Main",font);
+	spFontDrawRight(screen->w,0,0,SP_BUTTON_SELECT_NAME": Options",font);
 	spFontDraw(0,0,0,"Glutexto",font);
 
 	spFontDrawMiddle(screen->w/2,screen->h-font->maxheight,0,\
@@ -71,8 +130,8 @@ void draw( void )
 int calc(Uint32 steps)
 {
 	if (spGetInput()->button[SP_BUTTON_START])
-		return 1;
-	return 0;
+		main_menu();
+	return exit_now;
 }
 
 void resize(Uint16 w,Uint16 h)
@@ -100,10 +159,9 @@ void resize(Uint16 w,Uint16 h)
 	spFontAddButton( font, 'S', SP_BUTTON_START_NOWASD_NAME, spGetRGB(230,230,230), spGetRGB(64,64,64));
 	spFontAddButton( font, 'E', SP_BUTTON_SELECT_NOWASD_NAME, spGetRGB(230,230,230), spGetRGB(64,64,64));
 
-  if (editSurface)
+	if (editSurface)
 		spDeleteSurface(editSurface);
 	editSurface = spCreateSurface(w,h-2*font->maxheight);
-
 }
 
 void init_glutexto()
@@ -115,11 +173,18 @@ void init_glutexto()
 	resize(screen->w,screen->h);
 	spSetZSet(0);
 	spSetZTest(0);
+	load_fonts();
+	spFontSetShadeColor(EDIT_BACKGROUND_COLOR);
+	if (textFont)
+		spFontDelete(textFont);
+	textFont = spFontLoad(selectedFont->location,fontSize*spGetSizeFactor()>>SP_ACCURACY);
+	spFontAdd(textFont,SP_FONT_GROUP_ASCII,EDIT_TEXT_COLOR);//whole ASCII
 }
 
 void quit_glutexto()
 {
 	spFontDelete(font);
+	spFontDelete(textFont);
 	spQuitCore();
 }
 

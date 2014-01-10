@@ -28,12 +28,14 @@ int menu_count = 0;
 int menu_sel = 0;
 char menu_name[64];
 
+#define MENU_WIDTH 3/5
+
 void draw_menu()
 {
 	draw_without_flip();
-	spRectangle(screen->w*5/8,screen->h/4,0,screen->w*2/3,(4+menu_count)*font->maxheight,BACKGROUND_COLOR);
+	spRectangle(screen->w*MENU_WIDTH,screen->h/4,0,screen->w*2/3,(4+menu_count)*font->maxheight,BACKGROUND_COLOR);
 	int pos = screen->h/4-(4+menu_count)*font->maxheight/2;
-	spFontDrawMiddle(screen->w*5/8,pos,0,menu_name,font);
+	spFontDrawMiddle(screen->w*MENU_WIDTH,pos,0,menu_name,font);
 	pos+=font->maxheight*2;
 	int i;
 	pMenuItem item = firstMenuItem;
@@ -43,16 +45,16 @@ void draw_menu()
 		{
 			char buffer[64];
 			sprintf(buffer,"> %s <",item->name);
-			spFontDrawMiddle(screen->w*5/8,pos,0,buffer,font);
+			spFontDrawMiddle(screen->w*MENU_WIDTH,pos,0,buffer,font);
 			int l = spFontWidth(buffer,font);
-			spLine(screen->w*5/8-l/2,pos+font->maxheight-1,0,screen->w*5/8+l/2,pos+font->maxheight-1,0,FONT_COLOR);
+			spLine(screen->w*MENU_WIDTH-l/2,pos+font->maxheight-1,0,screen->w*MENU_WIDTH+l/2,pos+font->maxheight-1,0,FONT_COLOR);
 		}
 		else
-			spFontDrawMiddle(screen->w*5/8,pos,0,item->name,font);
+			spFontDrawMiddle(screen->w*MENU_WIDTH,pos,0,item->name,font);
 		pos+=font->maxheight;
 		item = item->next;
 	}
-	spFontDrawMiddle(screen->w*5/8,screen->h/4+(2+menu_count)*font->maxheight/2,0,SP_PRACTICE_OK_NAME": Choose    "SP_PRACTICE_CANCEL_NAME": Back",font);
+	spFontDrawMiddle(screen->w*MENU_WIDTH,screen->h/4+(2+menu_count)*font->maxheight/2,0,SP_PRACTICE_OK_NAME": Choose    "SP_PRACTICE_CANCEL_NAME": Back",font);
 	spFlip();
 }
 
@@ -220,13 +222,23 @@ int line_change(int action,char* menu_name)
 	return 0;
 }
 
+int menu_load(int action,char* menu_name)
+{
+	if (action == 0)
+	{
+		load_dialog();
+		return 1;
+	}
+	return 0;
+}
+
 void main_menu()
 {
 	sprintf(menu_name,"Main menu");
 	add_menu("Exit",menu_exit);
 	add_menu("Save as",NULL);
 	add_menu("Save",NULL);
-	add_menu("Load",NULL);
+	add_menu("Load",menu_load);
 	run_menu();
 	delete_menu();
 }

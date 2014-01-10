@@ -29,7 +29,7 @@ all: glutexto
 targets:
 	@echo "The targets are the same like for sparrow3d. :P"
 
-glutexto: glutexto.c menu.c settings.c makeBuildDir
+glutexto: glutexto.c menu.c settings.c dialog.c makeBuildDir
 	cp $(SPARROW_LIB)/libsparrow3d.so $(BUILD)
 	cp $(SPARROW_LIB)/libsparrowNet.so $(BUILD)
 	$(CPP) $(CFLAGS) glutexto.c $(SDL) $(INCLUDE) $(LIB) $(STATIC) $(DYNAMIC) -o $(BUILD)/glutexto

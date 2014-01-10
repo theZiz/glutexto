@@ -47,7 +47,7 @@ typedef struct sFont {
 
 pFont firstFont = NULL;
 pFont selectedFont = NULL;
-int fontSize = 8;
+int fontSize = 10;
 int exit_now = 0;
 SDL_Surface* screen;
 SDL_Surface* editSurface = NULL;
@@ -56,7 +56,9 @@ spFontPointer textFont = NULL;
 
 
 void resize(Uint16 w,Uint16 h);
+void draw_without_flip();
 
+#include "settings.c"
 #include "menu.c"
 
 void load_fonts()
@@ -96,7 +98,7 @@ void load_fonts()
 	selectedFont = firstFont;
 }
 
-void draw( void )
+void draw_without_flip( void )
 {
 	//filling the edit field
 	spSelectRenderTarget(editSurface);
@@ -104,7 +106,8 @@ void draw( void )
 	int i;
 	int pattern = 0b11001100;
 	spLetterPointer letter = spFontGetLetter(textFont,'A');
-	for (i = 2; i < editSurface->h; i+=textFont->maxheight+2)
+	int extra = fontSize/4;
+	for (i = extra; i < editSurface->h; i+=textFont->maxheight+extra)
 	{
 		spSetPattern8(pattern,pattern,pattern,pattern,pattern,pattern,pattern,pattern);
 		spLine(0,i+letter->height,0,screen->w,i+letter->height,0,EDIT_LINE_COLOR);
@@ -124,13 +127,26 @@ void draw( void )
 		SP_PRACTICE_CANCEL_NAME": Finish    "\
 		SP_PRACTICE_3_NAME": Load    "\
 		SP_PRACTICE_4_NAME": Save",font);
+}
+
+void draw()
+{
+	draw_without_flip();
 	spFlip();
 }
 
 int calc(Uint32 steps)
 {
 	if (spGetInput()->button[SP_BUTTON_START])
+	{
+		spGetInput()->button[SP_BUTTON_START] = 0;
 		main_menu();
+	}
+	if (spGetInput()->button[SP_BUTTON_SELECT])
+	{
+		spGetInput()->button[SP_BUTTON_SELECT] = 0;
+		options_menu();
+	}
 	return exit_now;
 }
 
@@ -174,6 +190,7 @@ void init_glutexto()
 	spSetZSet(0);
 	spSetZTest(0);
 	load_fonts();
+	load_settings();
 	spFontSetShadeColor(EDIT_BACKGROUND_COLOR);
 	if (textFont)
 		spFontDelete(textFont);

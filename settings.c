@@ -51,6 +51,8 @@ void load_settings()
 			if (selectedFont == NULL)
 				selectedFont = firstFont;
 		}
+		if (strstr(buffer,"Show Lines: ") == buffer)
+			showLines = (atoi(value) != 0);
 		if (strstr(buffer,"Font Size: ") == buffer)
 		{
 			fontSize = atoi(value);
@@ -71,6 +73,8 @@ void save_settings()
 	sprintf(buffer,"Font: %s",selectedFont->name);
 	spWriteOneLine(file,buffer);
 	sprintf(buffer,"Font Size: %i",fontSize);
+	spWriteOneLine(file,buffer);
+	sprintf(buffer,"Show Lines: %i",showLines);
 	spWriteOneLine(file,buffer);
 	SDL_RWclose(file);
 }

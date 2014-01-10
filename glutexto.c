@@ -34,6 +34,7 @@
 #define FONT_COLOR spGetRGB(255,255,255)
 #define BACKGROUND_COLOR spGetRGB(0,64,0)
 #define EDIT_BACKGROUND_COLOR spGetRGB(255,255,255)
+#define EDIT_NUMBER_BACKGROUND_COLOR spGetRGB(200,200,200)
 #define EDIT_TEXT_COLOR spGetRGB(0,32,0)
 #define EDIT_LINE_COLOR spGetRGB(220,220,220)
 #define SELECTED_BACKGROUND_COLOR spGetRGB(185,185,100)
@@ -53,6 +54,7 @@ SDL_Surface* screen;
 SDL_Surface* editSurface = NULL;
 spFontPointer font = NULL;
 spFontPointer textFont = NULL;
+int showLines = 1;
 
 
 void resize(Uint16 w,Uint16 h);
@@ -107,12 +109,37 @@ void draw_without_flip( void )
 	int pattern = 0b11001100;
 	spLetterPointer letter = spFontGetLetter(textFont,'A');
 	int extra = fontSize/4;
+	int max_line = 2+1; //TODO
+	char buffer[256];
+	int number_width;
+	if (showLines)
+	{
+		for (i = 0; i < max_line; i++)
+			buffer[i]='8';
+		buffer[i]=0;
+		number_width = spFontWidth(buffer,textFont);
+		spRectangle(number_width/2-2,editSurface->h/2,0,number_width,editSurface->h,EDIT_NUMBER_BACKGROUND_COLOR);
+	}
+	int line_number = 1;
 	for (i = extra; i < editSurface->h; i+=textFont->maxheight+extra)
 	{
-		spSetPattern8(pattern,pattern,pattern,pattern,pattern,pattern,pattern,pattern);
-		spLine(0,i+letter->height,0,screen->w,i+letter->height,0,EDIT_LINE_COLOR);
-		spDeactivatePattern();
-		spFontDraw(0,i,0,"Testtext",textFont);
+		if (showLines)
+		{
+			spSetPattern8(pattern,pattern,pattern,pattern,pattern,pattern,pattern,pattern);
+			spLine(number_width,i+letter->height,number_width,screen->w,i+letter->height,0,EDIT_LINE_COLOR);
+			spDeactivatePattern();
+			sprintf(buffer,"%i:",line_number);
+			spFontDrawRight(number_width-1,i,0,buffer,textFont);
+			spFontDraw(number_width,i,0,"Testtext",textFont);
+		}
+		else
+		{
+			spSetPattern8(pattern,pattern,pattern,pattern,pattern,pattern,pattern,pattern);
+			spLine(0,i+letter->height,0,screen->w,i+letter->height,0,EDIT_LINE_COLOR);
+			spDeactivatePattern();
+			spFontDraw(0,i,0,"Testtext",textFont);
+		}
+		line_number++;
 	}
 	//drawing all
 	spSelectRenderTarget(spGetWindowSurface());

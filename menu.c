@@ -209,6 +209,17 @@ int size_change(int action,char* menu_name)
 	return 0;
 }
 
+int line_change(int action,char* menu_name)
+{
+	showLines = 1-showLines;
+	if (showLines)
+		sprintf(menu_name,"Show lines: Yes");
+	else
+		sprintf(menu_name,"Show lines: No");
+	save_settings();
+	return 0;
+}
+
 void main_menu()
 {
 	sprintf(menu_name,"Main menu");
@@ -224,7 +235,10 @@ void options_menu()
 {
 	char buffer[64];
 	sprintf(menu_name,"Options menu");
-	add_menu("Show lines: Yes",NULL);
+	if (showLines)
+		add_menu("Show lines: Yes",line_change);
+	else
+		add_menu("Show lines: No",line_change);
 	sprintf(buffer,"Font Size: %i",fontSize);
 	add_menu(buffer,size_change);
 	sprintf(buffer,"Font: %s",selectedFont->name);

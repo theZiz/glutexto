@@ -48,7 +48,9 @@ typedef struct sFont {
 
 pFont firstFont = NULL;
 pFont selectedFont = NULL;
-int fontSize = 10;
+#define MIN_FONT_SIZE 6
+#define MAX_FONT_SIZE 20
+int fontSize = 12;
 int exit_now = 0;
 SDL_Surface* screen;
 SDL_Surface* editSurface = NULL;

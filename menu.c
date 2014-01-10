@@ -31,9 +31,9 @@ char menu_name[64];
 void draw_menu()
 {
 	draw_without_flip();
-	spRectangle(screen->w*5/7,screen->h/4,0,screen->w/2,(4+menu_count)*font->maxheight,BACKGROUND_COLOR);
+	spRectangle(screen->w*5/8,screen->h/4,0,screen->w*2/3,(4+menu_count)*font->maxheight,BACKGROUND_COLOR);
 	int pos = screen->h/4-(4+menu_count)*font->maxheight/2;
-	spFontDrawMiddle(screen->w*5/7,pos,0,menu_name,font);
+	spFontDrawMiddle(screen->w*5/8,pos,0,menu_name,font);
 	pos+=font->maxheight*2;
 	int i;
 	pMenuItem item = firstMenuItem;
@@ -43,16 +43,16 @@ void draw_menu()
 		{
 			char buffer[64];
 			sprintf(buffer,"> %s <",item->name);
-			spFontDrawMiddle(screen->w*5/7,pos,0,buffer,font);
+			spFontDrawMiddle(screen->w*5/8,pos,0,buffer,font);
 			int l = spFontWidth(buffer,font);
-			spLine(screen->w*5/7-l/2,pos+font->maxheight-1,0,screen->w*5/7+l/2,pos+font->maxheight-1,0,FONT_COLOR);
+			spLine(screen->w*5/8-l/2,pos+font->maxheight-1,0,screen->w*5/8+l/2,pos+font->maxheight-1,0,FONT_COLOR);
 		}
 		else
-			spFontDrawMiddle(screen->w*5/7,pos,0,item->name,font);
+			spFontDrawMiddle(screen->w*5/8,pos,0,item->name,font);
 		pos+=font->maxheight;
 		item = item->next;
 	}
-	spFontDrawMiddle(screen->w*5/7,screen->h/4+(2+menu_count)*font->maxheight/2,0,SP_PRACTICE_OK_NAME": Choose    "SP_PRACTICE_CANCEL_NAME": Back",font);
+	spFontDrawMiddle(screen->w*5/8,screen->h/4+(2+menu_count)*font->maxheight/2,0,SP_PRACTICE_OK_NAME": Choose    "SP_PRACTICE_CANCEL_NAME": Back",font);
 	spFlip();
 }
 
@@ -188,13 +188,13 @@ int size_change(int action,char* menu_name)
 {
 	if (action == 1)
 	{
-		if (fontSize < 16)
+		if (fontSize < MAX_FONT_SIZE)
 			fontSize++;
 	}
 	else
 	if (action == -1)
 	{
-		if (fontSize > 4)
+		if (fontSize > MIN_FONT_SIZE)
 			fontSize--;
 	}
 	if (action != 0)

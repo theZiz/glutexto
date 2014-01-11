@@ -48,7 +48,9 @@ typedef struct sFont {
 
 pFont firstFont = NULL;
 pFont selectedFont = NULL;
-int fontSize = 10;
+#define MIN_FONT_SIZE 6
+#define MAX_FONT_SIZE 20
+int fontSize = 12;
 int exit_now = 0;
 SDL_Surface* screen;
 SDL_Surface* editSurface = NULL;
@@ -61,6 +63,7 @@ void resize(Uint16 w,Uint16 h);
 void draw_without_flip();
 
 #include "settings.c"
+#include "dialog.c"
 #include "menu.c"
 
 void load_fonts()
@@ -173,6 +176,11 @@ int calc(Uint32 steps)
 	{
 		spGetInput()->button[SP_BUTTON_SELECT] = 0;
 		options_menu();
+	}
+	if (spGetInput()->button[SP_PRACTICE_3])
+	{
+		spGetInput()->button[SP_PRACTICE_3] = 0;
+		load_dialog();
 	}
 	return exit_now;
 }

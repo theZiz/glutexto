@@ -36,7 +36,17 @@ void load_settings()
 	char buffer[256];
 	SDL_RWops *file=SDL_RWFromFile(get_path(buffer,"settings.ini"),"r");
 	if (file == NULL)
+	{
+		while (selectedFont)
+		{
+			if (strcmp(selectedFont->name,"LiberationSans") == 0)
+				break;
+			selectedFont = selectedFont->next;
+		}
+		if (selectedFont == NULL)
+			selectedFont = firstFont;
 		return;
+	}
 	while (spReadOneLine(file,buffer,256) == 0)
 	{
 		char* value = strchr(buffer,':');
@@ -56,10 +66,10 @@ void load_settings()
 		if (strstr(buffer,"Font Size: ") == buffer)
 		{
 			fontSize = atoi(value);
-			if (fontSize < 4)
-				fontSize = 4;
-			if (fontSize > 16)
-				fontSize = 16;
+			if (fontSize < MIN_FONT_SIZE)
+				fontSize = MIN_FONT_SIZE;
+			if (fontSize > MAX_FONT_SIZE)
+				fontSize = MAX_FONT_SIZE;
 		}
 	}
 	

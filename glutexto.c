@@ -15,7 +15,7 @@
   * For feedback and questions about my Files and Projects please mail me,
   * Alexander Matthes (Ziz) , zizsdl_at_googlemail.com */
 
-#define GCW_FEELING
+//#define GCW_FEELING
 
 #if defined GCW_FEELING && defined X86CPU
 	#define TESTING
@@ -50,7 +50,7 @@ pFont firstFont = NULL;
 pFont selectedFont = NULL;
 #define MIN_FONT_SIZE 6
 #define MAX_FONT_SIZE 20
-int fontSize = 12;
+int fontSize = 11;
 int exit_now = 0;
 SDL_Surface* screen;
 SDL_Surface* editSurface = NULL;

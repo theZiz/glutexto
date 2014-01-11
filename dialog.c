@@ -20,7 +20,14 @@ char dialog_filename[512];
 
 void draw_dialog()
 {
-	spClearTarget(BACKGROUND_COLOR);
+	//draw files
+	spSelectRenderTarget(editSurface);
+	spClearTarget( EDIT_BACKGROUND_COLOR );
+
+	//drawing all
+	spSelectRenderTarget(spGetWindowSurface());
+	spClearTarget( BACKGROUND_COLOR );
+	spBlitSurface( screen->w/2,screen->h/2,0,editSurface);
 	switch (dialog_kind)
 	{
 		case 0:

@@ -45,35 +45,47 @@ void load_settings()
 		}
 		if (selectedFont == NULL)
 			selectedFont = firstFont;
-		return;
 	}
-	while (spReadOneLine(file,buffer,256) == 0)
+	else
 	{
-		char* value = strchr(buffer,':');
-		if (!value)
-			continue;
-		value+=2;
-		if (strstr(buffer,"Font: ") == buffer)
+		while (spReadOneLine(file,buffer,256) == 0)
 		{
-			selectedFont = firstFont;
-			while (selectedFont && strcmp(value,selectedFont->name) != 0)
-				selectedFont = selectedFont->next;
-			if (selectedFont == NULL)
+			char* value = strchr(buffer,':');
+			if (!value)
+				continue;
+			value+=2;
+			if (strstr(buffer,"Font: ") == buffer)
+			{
 				selectedFont = firstFont;
+				while (selectedFont && strcmp(value,selectedFont->name) != 0)
+					selectedFont = selectedFont->next;
+				if (selectedFont == NULL)
+					selectedFont = firstFont;
+			}
+			else
+			if (strstr(buffer,"Show Lines: ") == buffer)
+				showLines = (atoi(value) != 0);
+			else
+			if (strstr(buffer,"Font Size: ") == buffer)
+			{
+				fontSize = atoi(value);
+				if (fontSize < MIN_FONT_SIZE)
+					fontSize = MIN_FONT_SIZE;
+				if (fontSize > MAX_FONT_SIZE)
+					fontSize = MAX_FONT_SIZE;
+			}
+			else
+			if (strstr(buffer,"Dialog Folder: ") == buffer)
+				sprintf(dialog_folder,"%s",value);
 		}
-		if (strstr(buffer,"Show Lines: ") == buffer)
-			showLines = (atoi(value) != 0);
-		if (strstr(buffer,"Font Size: ") == buffer)
-		{
-			fontSize = atoi(value);
-			if (fontSize < MIN_FONT_SIZE)
-				fontSize = MIN_FONT_SIZE;
-			if (fontSize > MAX_FONT_SIZE)
-				fontSize = MAX_FONT_SIZE;
-		}
+		SDL_RWclose(file);
 	}
-	
-	SDL_RWclose(file);	
+	if (spFileExists(dialog_folder) == 0)
+		sprintf(dialog_folder,"/usr/local/home");
+	if (spFileExists(dialog_folder) == 0)
+		sprintf(dialog_folder,"/home");
+	if (spFileExists(dialog_folder) == 0)
+		sprintf(dialog_folder,"/");
 }
 
 void save_settings()
@@ -85,6 +97,8 @@ void save_settings()
 	sprintf(buffer,"Font Size: %i",fontSize);
 	spWriteOneLine(file,buffer);
 	sprintf(buffer,"Show Lines: %i",showLines);
+	spWriteOneLine(file,buffer);
+	sprintf(buffer,"Dialog Folder: %s",dialog_folder);
 	spWriteOneLine(file,buffer);
 	SDL_RWclose(file);
 }

@@ -55,9 +55,12 @@ int exit_now = 0;
 SDL_Surface* screen;
 SDL_Surface* editSurface = NULL;
 spFontPointer font = NULL;
+spFontPointer fontInverted = NULL;
 spFontPointer textFont = NULL;
 int showLines = 1;
-
+char dialog_folder[512] = "/usr/local/home";
+int next_in_a_row = 0;
+int time_until_next = 0;
 
 void resize(Uint16 w,Uint16 h);
 void draw_without_flip();
@@ -199,16 +202,14 @@ void resize(Uint16 w,Uint16 h)
 	spFontAdd(font,SP_FONT_GROUP_ASCII,FONT_COLOR);//whole ASCII
 	spFontAddBorder(font,BACKGROUND_COLOR);
 	spFontMulWidth(font,15<<SP_ACCURACY-4);
-	spFontAddButton( font, 'a', SP_BUTTON_LEFT_NOWASD_NAME, spGetRGB(230,230,230), spGetRGB(64,64,64));
-	spFontAddButton( font, 'd', SP_BUTTON_RIGHT_NOWASD_NAME, spGetRGB(230,230,230), spGetRGB(64,64,64));
-	spFontAddButton( font, 'w', SP_BUTTON_UP_NOWASD_NAME, spGetRGB(230,230,230), spGetRGB(64,64,64));
-	spFontAddButton( font, 's', SP_BUTTON_DOWN_NOWASD_NAME, spGetRGB(230,230,230), spGetRGB(64,64,64));
-	spFontAddButton( font, 'q', SP_BUTTON_L_NOWASD_NAME, spGetRGB(230,230,230), spGetRGB(64,64,64));
-	spFontAddButton( font, 'e', SP_BUTTON_R_NOWASD_NAME, spGetRGB(230,230,230), spGetRGB(64,64,64));
-	spFontAddButton( font, 'o', SP_PRACTICE_OK_NOWASD_NAME, spGetRGB(230,230,230), spGetRGB(64,64,64));
-	spFontAddButton( font, 'c', SP_PRACTICE_CANCEL_NOWASD_NAME, spGetRGB(230,230,230), spGetRGB(64,64,64));
-	spFontAddButton( font, 'S', SP_BUTTON_START_NOWASD_NAME, spGetRGB(230,230,230), spGetRGB(64,64,64));
-	spFontAddButton( font, 'E', SP_BUTTON_SELECT_NOWASD_NAME, spGetRGB(230,230,230), spGetRGB(64,64,64));
+
+	spFontSetShadeColor(EDIT_BACKGROUND_COLOR);
+	if (fontInverted)
+		spFontDelete(fontInverted);
+	fontInverted = spFontLoad(FONT_LOCATION,FONT_SIZE*spGetSizeFactor()>>SP_ACCURACY);
+	spFontAdd(fontInverted,SP_FONT_GROUP_ASCII,EDIT_TEXT_COLOR);//whole ASCII
+	spFontAddBorder(fontInverted,EDIT_BACKGROUND_COLOR);
+	spFontMulWidth(fontInverted,15<<SP_ACCURACY-4);
 
 	if (editSurface)
 		spDeleteSurface(editSurface);
@@ -236,6 +237,7 @@ void init_glutexto()
 void quit_glutexto()
 {
 	spFontDelete(font);
+	spFontDelete(fontInverted);
 	spFontDelete(textFont);
 	spQuitCore();
 }

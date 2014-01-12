@@ -65,6 +65,11 @@ int time_until_next = 0;
 void resize(Uint16 w,Uint16 h);
 void draw_without_flip();
 
+void load_text(char* filename)
+{
+	printf("Loading %s...\n",filename);
+}
+
 #include "settings.c"
 #include "dialog.c"
 #include "menu.c"
@@ -199,7 +204,7 @@ void resize(Uint16 w,Uint16 h)
 	if (font)
 		spFontDelete(font);
 	font = spFontLoad(FONT_LOCATION,FONT_SIZE*spGetSizeFactor()>>SP_ACCURACY);
-	spFontAdd(font,SP_FONT_GROUP_ASCII,FONT_COLOR);//whole ASCII
+	spFontAdd(font,SP_FONT_GROUP_ASCII""SP_FONT_GROUP_GERMAN,FONT_COLOR);//whole ASCII
 	spFontAddBorder(font,BACKGROUND_COLOR);
 	spFontMulWidth(font,15<<SP_ACCURACY-4);
 
@@ -207,7 +212,7 @@ void resize(Uint16 w,Uint16 h)
 	if (fontInverted)
 		spFontDelete(fontInverted);
 	fontInverted = spFontLoad(FONT_LOCATION,FONT_SIZE*spGetSizeFactor()>>SP_ACCURACY);
-	spFontAdd(fontInverted,SP_FONT_GROUP_ASCII,EDIT_TEXT_COLOR);//whole ASCII
+	spFontAdd(fontInverted,SP_FONT_GROUP_ASCII""SP_FONT_GROUP_GERMAN,EDIT_TEXT_COLOR);//whole ASCII
 	spFontAddBorder(fontInverted,EDIT_BACKGROUND_COLOR);
 	spFontMulWidth(fontInverted,15<<SP_ACCURACY-4);
 

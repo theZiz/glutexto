@@ -21,6 +21,21 @@ spFileListPointer dialog_list = NULL;
 spFileListPointer dialog_list_mom = NULL;
 
 #define DIALOG_SHOW_BEFORE 4
+#define DIALOG_UP ".. (upper directory)"
+
+void add_up(spFileListPointer *directory,char* root)
+{
+	if (strcmp(root,"/") == 0)
+		return;
+	spFileListPointer up = (spFileListPointer)malloc(sizeof(spFileList));
+	up->next = *directory;
+	if (*directory)
+		(*directory)->prev = up;
+	up->prev = NULL;
+	sprintf(up->name,DIALOG_UP);
+	up->type = SP_FILE_DIRECTORY;
+	*directory = up;
+}
 
 void dialog_test_and_add(int* pos,spFileListPointer mom,int special)
 {
@@ -35,7 +50,7 @@ void dialog_test_and_add(int* pos,spFileListPointer mom,int special)
 	}
 	i++;
 	char filename[512];
-	if (mom->type == SP_FILE_DIRECTORY)
+	if (mom->type & SP_FILE_DIRECTORY)
 		sprintf(filename,"[d] %s",&(mom->name[i]));
 	else
 		sprintf(filename,"[f] %s",&(mom->name[i]));
@@ -112,7 +127,7 @@ int calc_dialog(Uint32 steps)
 {
 	if (spGetInput()->button[SP_PRACTICE_CANCEL])
 	{
-		spGetInput()->button[SP_PRACTICE_CANCEL] = 1;
+		spGetInput()->button[SP_PRACTICE_CANCEL] = 0;
 		return 1;
 	}
 	if (time_until_next > 0)
@@ -141,11 +156,37 @@ int calc_dialog(Uint32 steps)
 		time_until_next = 0;
 		next_in_a_row = 0;
 	}
-	/*if (spGetInput()->button[SP_PRACTICE_OK])
+	if (spGetInput()->button[SP_PRACTICE_OK])
 	{
-		spGetInput()->button[SP_PRACTICE_OK] = 1;
-		return 1;
-	}*/
+		spGetInput()->button[SP_PRACTICE_OK] = 0;
+		if (dialog_list_mom->type & SP_FILE_DIRECTORY)
+		{
+			if (strcmp(dialog_list_mom->name,DIALOG_UP))
+				sprintf(dialog_folder,"%s",dialog_list_mom->name);
+			else
+			{
+				int i;
+				for (i = strlen(dialog_folder)-1; i >= 0;i--)
+					if (dialog_folder[i] == '/')
+						break;
+				dialog_folder[i] = 0;
+				if (dialog_folder[0] == 0)
+					sprintf(dialog_folder,"/");
+			}
+			spFileDeleteList(dialog_list);
+			dialog_list = NULL;
+			spFileGetDirectory( &dialog_list, dialog_folder, 0, 0);
+			spFileSortList( &dialog_list, SP_FILE_SORT_BY_TYPE_AND_NAME);
+			add_up(&dialog_list,dialog_folder);
+			dialog_list_mom = dialog_list;
+		}
+		else
+		{
+			load_text(dialog_list_mom->name);
+			save_settings();
+			return 1;
+		}
+	}
 	return 0;
 }
 
@@ -155,9 +196,11 @@ void run_dialog(int kind)
 	dialog_kind = kind;
 	spFileGetDirectory( &dialog_list, dialog_folder, 0, 0);
 	spFileSortList( &dialog_list, SP_FILE_SORT_BY_TYPE_AND_NAME);
+	add_up(&dialog_list,dialog_folder);
 	dialog_list_mom = dialog_list;
 	spLoop(draw_dialog,calc_dialog,10,resize,NULL);
 	spFileDeleteList(dialog_list);
+	dialog_list = NULL;
 }
 
 void load_dialog()

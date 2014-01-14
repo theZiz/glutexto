@@ -45,6 +45,14 @@ typedef struct sFont {
 	pFont next;
 } tFont;
 
+typedef struct sText *pText;
+typedef struct sText {
+	char* line;
+	int length;
+	int reserved_length;
+	pText prev,next;
+} tText;
+
 pFont firstFont = NULL;
 pFont selectedFont = NULL;
 int fontSize = 8;
@@ -53,10 +61,12 @@ SDL_Surface* screen;
 SDL_Surface* editSurface = NULL;
 spFontPointer font = NULL;
 spFontPointer textFont = NULL;
+pText text = NULL;
 
 
 void resize(Uint16 w,Uint16 h);
 
+#include "text.c"
 #include "menu.c"
 
 void load_fonts()

@@ -1,13 +1,5 @@
-* Fonts laden
-* Menustruktur (generisch)
-* Optionen
-	* Fontauswahl
-	* Größenauswahl
-	* Zeilennummer
 * Datei
-	* Laden (Auch per Taste)
 	* Speichern (Auch per Taste)
 	* Speichern unter (Auch per Taste)
-	* Exit
-* Laden Dialog (generisch, damit auch Speichern Dialog!)
-* Textdatei laden -> Zeilenweise, wir scrollen
+* Nachfrage beim Laden ohne Speichern
+* Nachfrage bei Neu ohne Speichern

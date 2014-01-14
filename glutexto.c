@@ -15,7 +15,7 @@
   * For feedback and questions about my Files and Projects please mail me,
   * Alexander Matthes (Ziz) , zizsdl_at_googlemail.com */
 
-#define GCW_FEELING
+//#define GCW_FEELING
 
 #if defined GCW_FEELING && defined X86CPU
 	#define TESTING
@@ -34,6 +34,7 @@
 #define FONT_COLOR spGetRGB(255,255,255)
 #define BACKGROUND_COLOR spGetRGB(0,64,0)
 #define EDIT_BACKGROUND_COLOR spGetRGB(255,255,255)
+#define EDIT_NUMBER_BACKGROUND_COLOR spGetRGB(200,200,200)
 #define EDIT_TEXT_COLOR spGetRGB(0,32,0)
 #define EDIT_LINE_COLOR spGetRGB(220,220,220)
 #define SELECTED_BACKGROUND_COLOR spGetRGB(185,185,100)
@@ -49,24 +50,36 @@ typedef struct sText *pText;
 typedef struct sText {
 	char* line;
 	int length;
-	int reserved_length;
+	int reserved;
 	pText prev,next;
 } tText;
 
 pFont firstFont = NULL;
 pFont selectedFont = NULL;
-int fontSize = 8;
+#define MIN_FONT_SIZE 6
+#define MAX_FONT_SIZE 20
+int fontSize = 11;
 int exit_now = 0;
 SDL_Surface* screen;
 SDL_Surface* editSurface = NULL;
 spFontPointer font = NULL;
+spFontPointer fontInverted = NULL;
 spFontPointer textFont = NULL;
 pText text = NULL;
-
+pText momLine = NULL;
+int line_number = 0;
+int showLines = 1;
+char dialog_folder[512] = "/usr/local/home";
+int next_in_a_row = 0;
+int time_until_next = 0;
 
 void resize(Uint16 w,Uint16 h);
+void draw_without_flip();
 
+#include "error.c"
 #include "text.c"
+#include "settings.c"
+#include "dialog.c"
 #include "menu.c"
 
 void load_fonts()
@@ -106,7 +119,7 @@ void load_fonts()
 	selectedFont = firstFont;
 }
 
-void draw( void )
+void draw_without_flip( void )
 {
 	//filling the edit field
 	spSelectRenderTarget(editSurface);
@@ -114,12 +127,46 @@ void draw( void )
 	int i;
 	int pattern = 0b11001100;
 	spLetterPointer letter = spFontGetLetter(textFont,'A');
-	for (i = 2; i < editSurface->h; i+=textFont->maxheight+2)
+	int extra = fontSize/4;
+	int max_line = 1;
+	int count = line_count;
+	while (count > 0)
 	{
-		spSetPattern8(pattern,pattern,pattern,pattern,pattern,pattern,pattern,pattern);
-		spLine(0,i+letter->height,0,screen->w,i+letter->height,0,EDIT_LINE_COLOR);
-		spDeactivatePattern();
-		spFontDraw(0,i,0,"Testtext",textFont);
+		count = count/10;
+		max_line++;
+	}
+	char buffer[256];
+	int number_width;
+	if (showLines)
+	{
+		for (i = 0; i < max_line; i++)
+			buffer[i]='8';
+		buffer[i]=0;
+		number_width = spFontWidth(buffer,textFont);
+		spRectangle(number_width/2-2,editSurface->h/2,0,number_width,editSurface->h,EDIT_NUMBER_BACKGROUND_COLOR);
+	}
+	int number = line_number;
+	pText line = momLine;
+	for (i = extra; i < editSurface->h && line; i+=textFont->maxheight+extra)
+	{
+		if (showLines)
+		{
+			spSetPattern8(pattern,pattern,pattern,pattern,pattern,pattern,pattern,pattern);
+			spLine(number_width,i+letter->height,number_width,screen->w,i+letter->height,0,EDIT_LINE_COLOR);
+			spDeactivatePattern();
+			sprintf(buffer,"%i:",number);
+			spFontDrawRight(number_width-1,i,0,buffer,textFont);
+			spFontDraw(number_width,i,0,line->line,textFont);
+		}
+		else
+		{
+			spSetPattern8(pattern,pattern,pattern,pattern,pattern,pattern,pattern,pattern);
+			spLine(0,i+letter->height,0,screen->w,i+letter->height,0,EDIT_LINE_COLOR);
+			spDeactivatePattern();
+			spFontDraw(0,i,0,line->line,textFont);
+		}
+		number++;
+		line = line->next;
 	}
 	//drawing all
 	spSelectRenderTarget(spGetWindowSurface());
@@ -134,20 +181,38 @@ void draw( void )
 		SP_PRACTICE_CANCEL_NAME": Finish    "\
 		SP_PRACTICE_3_NAME": Load    "\
 		SP_PRACTICE_4_NAME": Save",font);
+}
+
+void draw()
+{
+	draw_without_flip();
 	spFlip();
 }
 
 int calc(Uint32 steps)
 {
 	if (spGetInput()->button[SP_BUTTON_START])
+	{
+		spGetInput()->button[SP_BUTTON_START] = 0;
 		main_menu();
+	}
+	if (spGetInput()->button[SP_BUTTON_SELECT])
+	{
+		spGetInput()->button[SP_BUTTON_SELECT] = 0;
+		options_menu();
+	}
+	if (spGetInput()->button[SP_PRACTICE_3])
+	{
+		spGetInput()->button[SP_PRACTICE_3] = 0;
+		load_dialog();
+	}
 	return exit_now;
 }
 
 void resize(Uint16 w,Uint16 h)
 {
-  //Setup of the new/resized window
-  spSelectRenderTarget(spGetWindowSurface());
+	//Setup of the new/resized window
+	spSelectRenderTarget(spGetWindowSurface());
   
 	spFontShadeButtons(1);
 	//Font Loading
@@ -155,19 +220,17 @@ void resize(Uint16 w,Uint16 h)
 	if (font)
 		spFontDelete(font);
 	font = spFontLoad(FONT_LOCATION,FONT_SIZE*spGetSizeFactor()>>SP_ACCURACY);
-	spFontAdd(font,SP_FONT_GROUP_ASCII,FONT_COLOR);//whole ASCII
+	spFontAdd(font,SP_FONT_GROUP_ASCII""SP_FONT_GROUP_GERMAN,FONT_COLOR);//whole ASCII
 	spFontAddBorder(font,BACKGROUND_COLOR);
 	spFontMulWidth(font,15<<SP_ACCURACY-4);
-	spFontAddButton( font, 'a', SP_BUTTON_LEFT_NOWASD_NAME, spGetRGB(230,230,230), spGetRGB(64,64,64));
-	spFontAddButton( font, 'd', SP_BUTTON_RIGHT_NOWASD_NAME, spGetRGB(230,230,230), spGetRGB(64,64,64));
-	spFontAddButton( font, 'w', SP_BUTTON_UP_NOWASD_NAME, spGetRGB(230,230,230), spGetRGB(64,64,64));
-	spFontAddButton( font, 's', SP_BUTTON_DOWN_NOWASD_NAME, spGetRGB(230,230,230), spGetRGB(64,64,64));
-	spFontAddButton( font, 'q', SP_BUTTON_L_NOWASD_NAME, spGetRGB(230,230,230), spGetRGB(64,64,64));
-	spFontAddButton( font, 'e', SP_BUTTON_R_NOWASD_NAME, spGetRGB(230,230,230), spGetRGB(64,64,64));
-	spFontAddButton( font, 'o', SP_PRACTICE_OK_NOWASD_NAME, spGetRGB(230,230,230), spGetRGB(64,64,64));
-	spFontAddButton( font, 'c', SP_PRACTICE_CANCEL_NOWASD_NAME, spGetRGB(230,230,230), spGetRGB(64,64,64));
-	spFontAddButton( font, 'S', SP_BUTTON_START_NOWASD_NAME, spGetRGB(230,230,230), spGetRGB(64,64,64));
-	spFontAddButton( font, 'E', SP_BUTTON_SELECT_NOWASD_NAME, spGetRGB(230,230,230), spGetRGB(64,64,64));
+
+	spFontSetShadeColor(EDIT_BACKGROUND_COLOR);
+	if (fontInverted)
+		spFontDelete(fontInverted);
+	fontInverted = spFontLoad(FONT_LOCATION,FONT_SIZE*spGetSizeFactor()>>SP_ACCURACY);
+	spFontAdd(fontInverted,SP_FONT_GROUP_ASCII""SP_FONT_GROUP_GERMAN,EDIT_TEXT_COLOR);//whole ASCII
+	spFontAddBorder(fontInverted,EDIT_BACKGROUND_COLOR);
+	spFontMulWidth(fontInverted,15<<SP_ACCURACY-4);
 
 	if (editSurface)
 		spDeleteSurface(editSurface);
@@ -184,16 +247,20 @@ void init_glutexto()
 	spSetZSet(0);
 	spSetZTest(0);
 	load_fonts();
+	load_settings();
 	spFontSetShadeColor(EDIT_BACKGROUND_COLOR);
 	if (textFont)
 		spFontDelete(textFont);
 	textFont = spFontLoad(selectedFont->location,fontSize*spGetSizeFactor()>>SP_ACCURACY);
 	spFontAdd(textFont,SP_FONT_GROUP_ASCII,EDIT_TEXT_COLOR);//whole ASCII
+	newText();
 }
 
 void quit_glutexto()
 {
+	clearText();
 	spFontDelete(font);
+	spFontDelete(fontInverted);
 	spFontDelete(textFont);
 	spQuitCore();
 }

@@ -18,7 +18,7 @@
 typedef struct sMenuItem *pMenuItem;
 typedef struct sMenuItem {
 	char name[64];
-	void ( *callBack )( void );
+	int ( *callBack )( int action, char* menu_name );
 	pMenuItem next;
 } tMenuItem;
 
@@ -28,11 +28,14 @@ int menu_count = 0;
 int menu_sel = 0;
 char menu_name[64];
 
+#define MENU_WIDTH 3/5
+
 void draw_menu()
 {
-	spRectangle(screen->w*5/7,screen->h/4,0,screen->w/2,(4+menu_count)*font->maxheight,BACKGROUND_COLOR);
+	draw_without_flip();
+	spRectangle(screen->w*MENU_WIDTH,screen->h/4,0,screen->w*2/3,(4+menu_count)*font->maxheight,BACKGROUND_COLOR);
 	int pos = screen->h/4-(4+menu_count)*font->maxheight/2;
-	spFontDrawMiddle(screen->w*5/7,pos,0,menu_name,font);
+	spFontDrawMiddle(screen->w*MENU_WIDTH,pos,0,menu_name,font);
 	pos+=font->maxheight*2;
 	int i;
 	pMenuItem item = firstMenuItem;
@@ -42,16 +45,16 @@ void draw_menu()
 		{
 			char buffer[64];
 			sprintf(buffer,"> %s <",item->name);
-			spFontDrawMiddle(screen->w*5/7,pos,0,buffer,font);
+			spFontDrawMiddle(screen->w*MENU_WIDTH,pos,0,buffer,font);
 			int l = spFontWidth(buffer,font);
-			spLine(screen->w*5/7-l/2,pos+font->maxheight-1,0,screen->w*5/7+l/2,pos+font->maxheight-1,0,FONT_COLOR);
+			spLine(screen->w*MENU_WIDTH-l/2,pos+font->maxheight-1,0,screen->w*MENU_WIDTH+l/2,pos+font->maxheight-1,0,FONT_COLOR);
 		}
 		else
-			spFontDrawMiddle(screen->w*5/7,pos,0,item->name,font);
+			spFontDrawMiddle(screen->w*MENU_WIDTH,pos,0,item->name,font);
 		pos+=font->maxheight;
 		item = item->next;
 	}
-	spFontDrawMiddle(screen->w*5/7,screen->h/4+(2+menu_count)*font->maxheight/2,0,SP_PRACTICE_OK_NAME": Choose    "SP_PRACTICE_CANCEL_NAME": Back",font);
+	spFontDrawMiddle(screen->w*MENU_WIDTH,screen->h/4+(2+menu_count)*font->maxheight/2,0,SP_PRACTICE_OK_NAME": Choose    "SP_PRACTICE_CANCEL_NAME": Back",font);
 	spFlip();
 }
 
@@ -60,14 +63,17 @@ int calc_menu(Uint32 steps)
 	if (spGetInput()->axis[1] < 0)
 	{
 		spGetInput()->axis[1] = 0;
-		if (menu_sel > 0)
-			menu_sel--;
+		menu_sel = (menu_sel+menu_count-1) % menu_count;
 	}
 	if (spGetInput()->axis[1] > 0)
 	{
 		spGetInput()->axis[1] = 0;
-		if (menu_sel < menu_count-1)
-			menu_sel++;
+		menu_sel = (menu_sel+1)%menu_count;
+	}
+	if (spGetInput()->button[SP_PRACTICE_CANCEL])
+	{
+		spGetInput()->button[SP_PRACTICE_CANCEL] = 0;
+		return 1;
 	}
 	if (spGetInput()->button[SP_PRACTICE_OK])
 	{
@@ -77,8 +83,27 @@ int calc_menu(Uint32 steps)
 		for (i = 0;i < menu_sel; i++)
 			item = item->next;
 		if (item->callBack)
-			item->callBack();
-		return 1;
+			return item->callBack(0,item->name);
+	}
+	if (spGetInput()->axis[0] < 0)
+	{
+		spGetInput()->axis[0] = 0;
+		pMenuItem item = firstMenuItem;
+		int i;
+		for (i = 0;i < menu_sel; i++)
+			item = item->next;
+		if (item->callBack)
+			return item->callBack(-1,item->name);
+	}
+	if (spGetInput()->axis[0] > 0)
+	{
+		spGetInput()->axis[0] = 0;
+		pMenuItem item = firstMenuItem;
+		int i;
+		for (i = 0;i < menu_sel; i++)
+			item = item->next;
+		if (item->callBack)
+			return item->callBack(1,item->name);
 	}
 	return 0;
 }
@@ -100,7 +125,7 @@ void delete_menu()
 	menu_count = 0;
 }
 
-void add_menu(char* name,void ( *callBack )( void ))
+void add_menu(char* name,int ( *callBack )( int action, char* menu_name ))
 {
 	pMenuItem item = (pMenuItem)malloc(sizeof(tMenuItem));
 	sprintf(item->name,"%s",name);
@@ -110,9 +135,111 @@ void add_menu(char* name,void ( *callBack )( void ))
 	menu_count++;
 }
 
-void menu_exit()
+int menu_exit(int action,char* menu_name)
 {
-	exit_now = 1;
+	if (action == 0)
+	{
+		exit_now = 1;
+		return 1;
+	}
+	return 0;
+}
+
+int font_change(int action,char* menu_name)
+{
+	if (action == 1)
+	{
+		selectedFont = selectedFont->next;
+		if (selectedFont == NULL)
+			selectedFont = firstFont;		
+	}
+	else
+	if (action == -1)
+	{
+		pFont before = NULL;
+		pFont mom = firstFont;
+		while (mom != selectedFont)
+		{
+			before = mom;
+			mom = mom->next;
+		}
+		selectedFont = before;
+		if (selectedFont == NULL)
+		{
+			mom = firstFont;
+			while (mom)
+			{
+				selectedFont = mom;
+				mom = mom->next;
+			}
+		}
+	}
+	if (action != 0)
+	{
+		sprintf(menu_name,"Font: %s",selectedFont->name);
+		if (textFont)
+			spFontDelete(textFont);
+		textFont = spFontLoad(selectedFont->location,fontSize*spGetSizeFactor()>>SP_ACCURACY);
+		spFontAdd(textFont,SP_FONT_GROUP_ASCII,EDIT_TEXT_COLOR);//whole ASCII
+		save_settings();
+	}
+	return 0;
+}
+
+int size_change(int action,char* menu_name)
+{
+	if (action == 1)
+	{
+		if (fontSize < MAX_FONT_SIZE)
+			fontSize++;
+	}
+	else
+	if (action == -1)
+	{
+		if (fontSize > MIN_FONT_SIZE)
+			fontSize--;
+	}
+	if (action != 0)
+	{
+		sprintf(menu_name,"Font Size: %i",fontSize);
+		if (textFont)
+			spFontDelete(textFont);
+		textFont = spFontLoad(selectedFont->location,fontSize*spGetSizeFactor()>>SP_ACCURACY);
+		spFontAdd(textFont,SP_FONT_GROUP_ASCII,EDIT_TEXT_COLOR);//whole ASCII
+		save_settings();
+	}
+	return 0;
+}
+
+int line_change(int action,char* menu_name)
+{
+	showLines = 1-showLines;
+	if (showLines)
+		sprintf(menu_name,"Show lines: Yes");
+	else
+		sprintf(menu_name,"Show lines: No");
+	save_settings();
+	return 0;
+}
+
+int menu_load(int action,char* menu_name)
+{
+	if (action == 0)
+	{
+		load_dialog();
+		return 1;
+	}
+	return 0;
+}
+
+int menu_new(int action,char* menu_name)
+{
+	if (action == 0)
+	{
+		newText();
+		return 1;
+	}
+	return 0;
 }
 
 void main_menu()
@@ -121,12 +248,24 @@ void main_menu()
 	add_menu("Exit",menu_exit);
 	add_menu("Save as",NULL);
 	add_menu("Save",NULL);
-	add_menu("Load",NULL);
+	add_menu("Load",menu_load);
+	add_menu("New",menu_new);
 	run_menu();
 	delete_menu();
 }
 
 void options_menu()
 {
-	
+	char buffer[64];
+	sprintf(menu_name,"Options menu");
+	if (showLines)
+		add_menu("Show lines: Yes",line_change);
+	else
+		add_menu("Show lines: No",line_change);
+	sprintf(buffer,"Font Size: %i",fontSize);
+	add_menu(buffer,size_change);
+	sprintf(buffer,"Font: %s",selectedFont->name);
+	add_menu(buffer,font_change);
+	run_menu();
+	delete_menu();	
 }

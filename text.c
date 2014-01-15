@@ -56,11 +56,30 @@ pText addTextLine(char* line,pText after)
 	return newText;
 }
 
+void addToLine(char* newBuffer)
+{
+	int l = strlen(newBuffer);
+	if (l + momLine->length + 1 > momLine->reserved) //Realloc
+	{
+		momLine->reserved = (momLine->length + l +4)*5/4;
+		char* new_reserved = (char*)malloc(momLine->reserved);
+		memcpy(new_reserved,momLine->line,momLine->length+1);
+		free(momLine->line);
+		momLine->line = new_reserved;
+	}
+	char end_line[momLine->length-line_pos+1];
+	memcpy(end_line,&(momLine->line[line_pos]),momLine->length-line_pos+1);
+	sprintf(&(momLine->line[line_pos]),"%s%s",newBuffer,end_line);
+	momLine->length += l;
+	line_pos += l;
+}
+
 void newText()
 {
 	clearText();
 	momLine = addTextLine("\n",NULL);
 	line_number = 1;
+	line_pos = 0;
 }
 
 void loadText(char* filename)
@@ -84,6 +103,7 @@ void loadText(char* filename)
 		last = addTextLine(buffer,last);
 	momLine = text;
 	line_number = 1;
+	line_pos = 0;
 	SDL_RWclose(file);
 }
 

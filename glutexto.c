@@ -32,10 +32,10 @@
 #define FONT_LOCATION "./font/Chango-Regular.ttf"
 #define FONT_SIZE 7
 #define FONT_COLOR spGetRGB(255,255,255)
-#define BACKGROUND_COLOR spGetRGB(0,64,0)
+#define BACKGROUND_COLOR spGetRGB(96,32,0)
 #define EDIT_BACKGROUND_COLOR spGetRGB(255,255,255)
 #define EDIT_NUMBER_BACKGROUND_COLOR spGetRGB(200,200,200)
-#define EDIT_TEXT_COLOR spGetRGB(0,32,0)
+#define EDIT_TEXT_COLOR spGetRGB(32,0,0)
 #define EDIT_LINE_COLOR spGetRGB(220,220,220)
 #define SELECTED_BACKGROUND_COLOR spGetRGB(185,185,100)
 
@@ -68,10 +68,13 @@ spFontPointer textFont = NULL;
 pText text = NULL;
 pText momLine = NULL;
 int line_number = 0;
+int line_pos = 0;
 int showLines = 1;
 char dialog_folder[512] = "/usr/local/home";
 int next_in_a_row = 0;
 int time_until_next = 0;
+int blink = 0;
+char enter_buffer[5]=""; //a whole utf8 letter
 
 void resize(Uint16 w,Uint16 h);
 void draw_without_flip();
@@ -145,10 +148,19 @@ void draw_without_flip( void )
 		number_width = spFontWidth(buffer,textFont);
 		spRectangle(number_width/2-2,editSurface->h/2,0,number_width,editSurface->h,EDIT_NUMBER_BACKGROUND_COLOR);
 	}
-	int number = line_number;
+	int lines_per_screen = editSurface->h/(textFont->maxheight+extra);
+	int start_line = line_number - lines_per_screen/3;
+	if (start_line+lines_per_screen+1 > line_count)
+		start_line = line_count-lines_per_screen+1;
+	if (start_line < 1)
+		start_line = 1;
 	pText line = momLine;
+	for (i = line_number; i > start_line; i--)
+		line = line->prev;
+	int number = start_line;
 	for (i = extra; i < editSurface->h && line; i+=textFont->maxheight+extra)
 	{
+		int text_extra = 0;
 		if (showLines)
 		{
 			spSetPattern8(pattern,pattern,pattern,pattern,pattern,pattern,pattern,pattern);
@@ -157,6 +169,7 @@ void draw_without_flip( void )
 			sprintf(buffer,"%i:",number);
 			spFontDrawRight(number_width-1,i,0,buffer,textFont);
 			spFontDraw(number_width,i,0,line->line,textFont);
+			text_extra = number_width-1;
 		}
 		else
 		{
@@ -164,6 +177,19 @@ void draw_without_flip( void )
 			spLine(0,i+letter->height,0,screen->w,i+letter->height,0,EDIT_LINE_COLOR);
 			spDeactivatePattern();
 			spFontDraw(0,i,0,line->line,textFont);
+		}
+		if (line == momLine)
+		{
+			char end = momLine->line[line_pos];
+			momLine->line[line_pos] = 0;
+			text_extra += spFontWidth(momLine->line,textFont);
+			momLine->line[line_pos] = end;
+			if (!(blink & 512))
+			{
+				spLine(text_extra-1,i+letter->height-font->maxheight-extra,0,text_extra+2,i+letter->height-font->maxheight-extra,0,EDIT_TEXT_COLOR);
+				spLine(text_extra-1,i+letter->height,0,text_extra+2,i+letter->height,0,EDIT_TEXT_COLOR);
+				spLine(text_extra,i+letter->height-font->maxheight-extra,0,text_extra,i+letter->height,0,EDIT_TEXT_COLOR);
+			}
 		}
 		number++;
 		line = line->next;
@@ -175,6 +201,9 @@ void draw_without_flip( void )
 	spFontDrawMiddle(screen->w/2,0,0,SP_BUTTON_START_NAME": Main",font);
 	spFontDrawRight(screen->w,0,0,SP_BUTTON_SELECT_NAME": Options",font);
 	spFontDraw(0,0,0,"Glutexto",font);
+
+	if (spIsKeyboardPolled() && spGetVirtualKeyboardState() == SP_VIRTUAL_KEYBOARD_ALWAYS)
+		spBlitSurface(screen->w/2,screen->h-spGetVirtualKeyboard()->h/2-font->maxheight,0,spGetVirtualKeyboard());
 
 	spFontDrawMiddle(screen->w/2,screen->h-font->maxheight,0,\
 		SP_PRACTICE_OK_NAME": Enter    "\
@@ -191,6 +220,95 @@ void draw()
 
 int calc(Uint32 steps)
 {
+	blink += steps;
+	if (time_until_next > 0)
+		time_until_next -= steps;
+	if (spGetInput()->axis[1] < 0 && momLine->prev)
+	{
+		if (time_until_next <= 0)
+		{
+			momLine = momLine->prev;
+			line_number--;
+			next_in_a_row++;
+			time_until_next = 300/next_in_a_row;
+			blink = 0;
+			if (line_pos > momLine->length)
+				line_pos = momLine->length;
+		}
+	}
+	else
+	if (spGetInput()->axis[1] > 0 && momLine->next)
+	{
+		if (time_until_next <= 0)
+		{
+			momLine = momLine->next;
+			line_number++;
+			next_in_a_row++;
+			time_until_next = 300/next_in_a_row;
+			blink = 0;
+			if (line_pos > momLine->length)
+				line_pos = momLine->length;
+		}
+	}
+	else
+	if (spGetInput()->button[SP_BUTTON_L] && momLine->prev)
+	{
+		if (time_until_next <= 0)
+		{
+			int i;
+			for (i = 0; i < 32 && momLine->prev; i++)
+				momLine = momLine->prev;
+			line_number-=i;
+			next_in_a_row++;
+			time_until_next = 300/next_in_a_row;
+			blink = 0;
+			if (line_pos > momLine->length)
+				line_pos = momLine->length;
+		}
+	}
+	else
+	if (spGetInput()->button[SP_BUTTON_R] && momLine->next)
+	{
+		if (time_until_next <= 0)
+		{
+			int i;
+			for (i = 0; i < 32 && momLine->next; i++)
+				momLine = momLine->next;
+			line_number+=i;
+			next_in_a_row++;
+			time_until_next = 300/next_in_a_row;
+			blink = 0;
+			if (line_pos > momLine->length)
+				line_pos = momLine->length;
+		}
+	}
+	else
+	if (spGetInput()->axis[0] < 0 && line_pos > 0)
+	{
+		if (time_until_next <= 0)
+		{
+			line_pos--;
+			next_in_a_row++;
+			time_until_next = 300/next_in_a_row;
+			blink = 0;
+		}
+	}
+	else
+	if (spGetInput()->axis[0] > 0 && line_pos < momLine->length)
+	{
+		if (time_until_next <= 0)
+		{
+			line_pos++;
+			next_in_a_row++;
+			time_until_next = 300/next_in_a_row;
+			blink = 0;
+		}
+	}
+	else
+	{
+		time_until_next = 0;
+		next_in_a_row = 0;
+	}
 	if (spGetInput()->button[SP_BUTTON_START])
 	{
 		spGetInput()->button[SP_BUTTON_START] = 0;
@@ -205,6 +323,22 @@ int calc(Uint32 steps)
 	{
 		spGetInput()->button[SP_PRACTICE_3] = 0;
 		load_dialog();
+	}
+	if (spGetInput()->button[SP_PRACTICE_OK])
+	{
+		spGetInput()->button[SP_PRACTICE_OK] = 0;
+		spPollKeyboardInput(enter_buffer,4,SP_PRACTICE_OK_MASK);
+	}
+	if (enter_buffer[0] != 0)
+	{
+		addToLine(enter_buffer);
+		enter_buffer[0] = 0;
+		spGetInput()->keyboard.pos = 0;
+	}
+	if (spGetInput()->button[SP_PRACTICE_CANCEL])
+	{
+		spGetInput()->button[SP_PRACTICE_CANCEL] = 0;
+		spStopKeyboardInput();
 	}
 	return exit_now;
 }
@@ -235,6 +369,8 @@ void resize(Uint16 w,Uint16 h)
 	if (editSurface)
 		spDeleteSurface(editSurface);
 	editSurface = spCreateSurface(w,h-2*font->maxheight);
+
+	spSetVirtualKeyboard(SP_VIRTUAL_KEYBOARD_ALWAYS,0,h-w*48/320-font->maxheight,w,w*48/320,spLoadSurface("./data/keyboard320.png"),spLoadSurface("./data/keyboardShift320.png"));
 }
 
 void init_glutexto()

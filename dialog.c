@@ -105,12 +105,8 @@ void draw_dialog()
 			spFontDrawMiddle(screen->w/2,screen->h-font->maxheight,0,SP_PRACTICE_OK_NAME": Choose [f]ile or enter [d]irectory    "SP_PRACTICE_CANCEL_NAME": Cancel",font);
 			break;
 		case 1:
-			spFontDrawMiddle(screen->w/2,0,0,"Choose location to save",font);
-			spFontDrawMiddle(screen->w/2,screen->h-font->maxheight,0,SP_PRACTICE_OK_NAME": Choose or enter [d]irectory    "SP_PRACTICE_CANCEL_NAME": Cancel",font);
-			break;
-		case 2:
-			spFontDrawMiddle(screen->w/2,0,0,"Choose filename to save",font);
-			spFontDrawMiddle(screen->w/2,screen->h-font->maxheight,0,SP_PRACTICE_OK_NAME": Choose letter    "SP_PRACTICE_CANCEL_NAME": Cancel",font);
+			spFontDrawMiddle(screen->w/2,0,0,"Choose file/location to save",font);
+			spFontDrawMiddle(screen->w/2,screen->h-font->maxheight,0,SP_PRACTICE_OK_NAME": Choose [f]ile/[d]irectory   "SP_PRACTICE_3_NAME": New file   "SP_PRACTICE_CANCEL_NAME": Cancel",font);
 			break;
 	}
 	char buffer[256];
@@ -156,7 +152,41 @@ int calc_dialog(Uint32 steps)
 		time_until_next = 0;
 		next_in_a_row = 0;
 	}
-	if (spGetInput()->button[SP_PRACTICE_OK])
+	if (dialog_kind == 1 && spGetInput()->button[SP_PRACTICE_3])
+	{
+		spGetInput()->button[SP_PRACTICE_3] = 0;
+		char filename[512] = "";
+		if (get_string("Enter filename:",filename,512))
+		{
+			if (filename[0] != 0)
+			{
+				char buffer[512];
+				if (strcmp(dialog_folder,"/") == 0)
+					sprintf(buffer,"/%s",filename);
+				else
+					sprintf(buffer,"%s/%s",dialog_folder,filename);
+				int yes = 1;
+				if (spFileExists(buffer))
+				{
+					int i;
+					for (i = strlen(buffer)-1; i >= 0; i--)
+						if (buffer[i] == '/')
+							break;
+					i++;
+					char buffer2[512];
+					sprintf(buffer2,"Do you really want to overwrite\n%s?",&buffer[i]);
+					yes = ask_yes_no(buffer2);
+				}
+				if (yes)
+				{
+					saveText(dialog_list_mom->name);
+					save_settings();
+					return 1;
+				}
+			}
+		}
+	}
+	if (dialog_kind == 0 && spGetInput()->button[SP_PRACTICE_OK])
 	{
 		spGetInput()->button[SP_PRACTICE_OK] = 0;
 		if (dialog_list_mom->type & SP_FILE_DIRECTORY)
@@ -185,6 +215,47 @@ int calc_dialog(Uint32 steps)
 			loadText(dialog_list_mom->name);
 			save_settings();
 			return 1;
+		}
+	}
+	if (dialog_kind == 1 && spGetInput()->button[SP_PRACTICE_OK])
+	{
+		spGetInput()->button[SP_PRACTICE_OK] = 0;
+		if (dialog_list_mom->type & SP_FILE_DIRECTORY)
+		{
+			if (strcmp(dialog_list_mom->name,DIALOG_UP))
+				sprintf(dialog_folder,"%s",dialog_list_mom->name);
+			else
+			{
+				int i;
+				for (i = strlen(dialog_folder)-1; i >= 0;i--)
+					if (dialog_folder[i] == '/')
+						break;
+				dialog_folder[i] = 0;
+				if (dialog_folder[0] == 0)
+					sprintf(dialog_folder,"/");
+			}
+			spFileDeleteList(dialog_list);
+			dialog_list = NULL;
+			spFileGetDirectory( &dialog_list, dialog_folder, 0, 0);
+			spFileSortList( &dialog_list, SP_FILE_SORT_BY_TYPE_AND_NAME);
+			add_up(&dialog_list,dialog_folder);
+			dialog_list_mom = dialog_list;
+		}
+		else
+		{
+			int i;
+			for (i = strlen(dialog_list_mom->name)-1; i >= 0; i--)
+				if (dialog_list_mom->name[i] == '/')
+					break;
+			i++;
+			char buffer[512];
+			sprintf(buffer,"Do you really want to overwrite\n%s?",&dialog_list_mom->name[i]);
+			if (ask_yes_no(buffer))
+			{
+				saveText(dialog_list_mom->name);
+				save_settings();
+				return 1;
+			}
 		}
 	}
 	return 0;

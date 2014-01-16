@@ -17,7 +17,8 @@
   
 int line_count = 0;
 int text_changed = 0;
-char last_filename[512] = "";
+char last_filename[512] = "New document";
+char complete_filename[512] = "New document";
 
 void clearText()
 {
@@ -123,6 +124,8 @@ void newText()
 	line_number = 1;
 	line_pos = 0;
 	text_changed = 0;
+	sprintf(last_filename,"New document");
+	sprintf(complete_filename,"");
 }
 
 void loadText(char* filename)
@@ -130,7 +133,12 @@ void loadText(char* filename)
 	if (text_changed)
 	{
 		char buffer[1024];
-		sprintf(buffer,"You didn't save\n%s.\nDo you really want to open\n%s?",last_filename,filename);
+		int i;
+		for (i = strlen(filename)-1;i >= 0; i--)
+			if (filename[i] == '/')
+				break;
+		i++;
+		sprintf(buffer,"You didn't save\n%s.\nDo you really want to open\n%s?",last_filename,&(filename[i]));
 		if (ask_yes_no(buffer) == 0)
 			return;
 	}
@@ -140,6 +148,7 @@ void loadText(char* filename)
 			break;
 	i++;
 	sprintf(last_filename,"%s",&filename[i]);
+	sprintf(complete_filename,"%s",filename);
 	printf("Loading %s...\n",filename);
 	SDL_RWops *file=SDL_RWFromFile(filename,"r");
 	if (file == NULL)

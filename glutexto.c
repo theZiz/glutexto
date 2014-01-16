@@ -146,7 +146,6 @@ void draw_without_flip( void )
 			buffer[i]='8';
 		buffer[i]=0;
 		number_width = spFontWidth(buffer,textFont);
-		spRectangle(number_width/2-2,editSurface->h/2,0,number_width,editSurface->h,EDIT_NUMBER_BACKGROUND_COLOR);
 	}
 	int lines_per_screen = editSurface->h/(textFont->maxheight+extra);
 	if (spIsKeyboardPolled() && spGetVirtualKeyboardState() == SP_VIRTUAL_KEYBOARD_ALWAYS)
@@ -161,17 +160,31 @@ void draw_without_flip( void )
 	for (i = line_number; i > start_line; i--)
 		line = line->prev;
 	int number = start_line;
+
+	char end = momLine->line[line_pos];
+	momLine->line[line_pos] = 0;
+	int momLineCursorPos = spFontWidth(momLine->line,textFont);
+	momLine->line[line_pos] = end;
+	
+	int textShift = 0;
+
+	if (momLineCursorPos > editSurface->w*3/4)
+	{
+		textShift = editSurface->w*3/4 - momLineCursorPos;
+	}
+
 	for (i = extra; i < editSurface->h && line; i+=textFont->maxheight+extra)
 	{
 		int text_extra = 0;
 		if (showLines)
 		{
+			spFontDraw(textShift+number_width,i,0,line->line,textFont);
 			spSetPattern8(pattern,pattern,pattern,pattern,pattern,pattern,pattern,pattern);
 			spLine(number_width,i+letter->height,number_width,screen->w,i+letter->height,0,EDIT_LINE_COLOR);
 			spDeactivatePattern();
 			sprintf(buffer,"%i:",number);
+			spRectangle(number_width/2-2,i+(font->maxheight+extra)/2,0,number_width,font->maxheight+extra+2,EDIT_NUMBER_BACKGROUND_COLOR);
 			spFontDrawRight(number_width-1,i,0,buffer,textFont);
-			spFontDraw(number_width,i,0,line->line,textFont);
 			text_extra = number_width-1;
 		}
 		else
@@ -179,19 +192,16 @@ void draw_without_flip( void )
 			spSetPattern8(pattern,pattern,pattern,pattern,pattern,pattern,pattern,pattern);
 			spLine(0,i+letter->height,0,screen->w,i+letter->height,0,EDIT_LINE_COLOR);
 			spDeactivatePattern();
-			spFontDraw(0,i,0,line->line,textFont);
+			spFontDraw(textShift,i,0,line->line,textFont);
 		}
 		if (line == momLine)
 		{
-			char end = momLine->line[line_pos];
-			momLine->line[line_pos] = 0;
-			text_extra += spFontWidth(momLine->line,textFont);
-			momLine->line[line_pos] = end;
+			text_extra += momLineCursorPos;
 			if (!(blink & 512))
 			{
-				spLine(text_extra-1,i+letter->height-font->maxheight-extra,0,text_extra+2,i+letter->height-font->maxheight-extra,0,EDIT_TEXT_COLOR);
-				spLine(text_extra-1,i+letter->height,0,text_extra+2,i+letter->height,0,EDIT_TEXT_COLOR);
-				spLine(text_extra,i+letter->height-font->maxheight-extra,0,text_extra,i+letter->height,0,EDIT_TEXT_COLOR);
+				spLine(textShift+text_extra-1,i+letter->height-font->maxheight-extra,0,textShift+text_extra+2,i+letter->height-font->maxheight-extra,0,EDIT_TEXT_COLOR);
+				spLine(textShift+text_extra-1,i+letter->height,0,textShift+text_extra+2,i+letter->height,0,EDIT_TEXT_COLOR);
+				spLine(textShift+text_extra,i+letter->height-font->maxheight-extra,0,textShift+text_extra,i+letter->height,0,EDIT_TEXT_COLOR);
 			}
 		}
 		number++;
@@ -201,20 +211,10 @@ void draw_without_flip( void )
 	spSelectRenderTarget(spGetWindowSurface());
 	spClearTarget( BACKGROUND_COLOR );
 	spBlitSurface( screen->w/2,screen->h/2,0,editSurface);
-	if (last_filename[0] == 0)
-	{
-		if (text_changed)
-			sprintf(buffer,"*Glutexto");
-		else
-			sprintf(buffer,"Glutexto");
-	}
+	if (text_changed)
+		sprintf(buffer,"*%s",last_filename);
 	else
-	{
-		if (text_changed)
-			sprintf(buffer,"*%s",last_filename);
-		else
-			sprintf(buffer,"%s",last_filename);
-	}
+		sprintf(buffer,"%s",last_filename);
 	spFontDraw(0,0,0,buffer,font);
 
 	if (spIsKeyboardPolled() && spGetVirtualKeyboardState() == SP_VIRTUAL_KEYBOARD_ALWAYS)
@@ -353,6 +353,11 @@ int calc(Uint32 steps)
 		{
 			spGetInput()->button[SP_PRACTICE_3] = 0;
 			load_dialog();
+		}
+		if (spGetInput()->button[SP_PRACTICE_4])
+		{
+			spGetInput()->button[SP_PRACTICE_4] = 0;
+			menu_save(0,NULL);
 		}
 		if (spGetInput()->button[SP_PRACTICE_OK])
 		{

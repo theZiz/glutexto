@@ -232,6 +232,29 @@ int menu_load(int action,char* menu_name)
 	return 0;
 }
 
+int menu_save_as(int action,char* menu_name)
+{
+	if (action == 0)
+	{
+		save_as_dialog();
+		return 1;
+	}
+	return 0;
+}
+
+int menu_save(int action,char* menu_name)
+{
+	if (action == 0)
+	{
+		if (complete_filename[0] == 0)
+			menu_save_as(action,menu_name);
+		else
+			saveText(complete_filename);
+		return 1;
+	}
+	return 0;
+}
+
 int menu_new(int action,char* menu_name)
 {
 	if (action == 0)
@@ -246,8 +269,8 @@ void main_menu()
 {
 	sprintf(menu_name,"Main menu");
 	add_menu("Exit",menu_exit);
-	add_menu("Save as",NULL);
-	add_menu("Save",NULL);
+	add_menu("Save as",menu_save_as);
+	add_menu("Save",menu_save);
 	add_menu("Load",menu_load);
 	add_menu("New",menu_new);
 	run_menu();

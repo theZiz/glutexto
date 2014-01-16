@@ -6,6 +6,6 @@ Terminal=false
 Type=Application
 StartupNotify=true
 Icon=glutexto
-Categories=application;
+Categories=applications;
 X-OD-Manual=glutexto/README.md
 

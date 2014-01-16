@@ -15,7 +15,7 @@
   * For feedback and questions about my Files and Projects please mail me,
   * Alexander Matthes (Ziz) , zizsdl_at_googlemail.com */
 
-//#define GCW_FEELING
+#define GCW_FEELING
 
 #if defined GCW_FEELING && defined X86CPU
 	#define TESTING
@@ -166,7 +166,7 @@ void draw_without_flip( void )
 	int momLineCursorPos = spFontWidth(momLine->line,textFont);
 	momLine->line[line_pos] = end;
 	
-	int textShift = 0;
+	int textShift = 1;
 
 	if (momLineCursorPos > editSurface->w*3/4)
 	{
@@ -183,7 +183,7 @@ void draw_without_flip( void )
 			spLine(number_width,i+letter->height,number_width,screen->w,i+letter->height,0,EDIT_LINE_COLOR);
 			spDeactivatePattern();
 			sprintf(buffer,"%i:",number);
-			spRectangle(number_width/2-2,i+(font->maxheight+extra)/2,0,number_width,font->maxheight+extra+2,EDIT_NUMBER_BACKGROUND_COLOR);
+			spRectangle(number_width/2-2,i+(textFont->maxheight+extra-2)/2,0,number_width,textFont->maxheight+extra,EDIT_NUMBER_BACKGROUND_COLOR);
 			spFontDrawRight(number_width-1,i,0,buffer,textFont);
 			text_extra = number_width-1;
 		}
@@ -375,9 +375,7 @@ int calc(Uint32 steps)
 		if (spGetInput()->button[SP_PRACTICE_3])
 		{
 			spGetInput()->button[SP_PRACTICE_3] = 0;
-			momLine = addTextLine("",momLine);
-			line_number++;
-			line_pos = 0;
+			addReturn();
 		}
 		if (spGetInput()->button[SP_PRACTICE_4])
 		{

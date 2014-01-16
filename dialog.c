@@ -179,7 +179,7 @@ int calc_dialog(Uint32 steps)
 				}
 				if (yes)
 				{
-					saveText(dialog_list_mom->name);
+					saveText(buffer);
 					save_settings();
 					return 1;
 				}

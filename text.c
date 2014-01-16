@@ -76,6 +76,18 @@ void addToLine(char* newBuffer)
 	text_changed = 1;
 }
 
+
+void addReturn()
+{
+	pText oldMomLine = momLine;
+	int l = strlen(&(momLine->line[line_pos]));
+	momLine = addTextLine(&(momLine->line[line_pos]),momLine);
+	oldMomLine->line[line_pos] = 0;
+	oldMomLine->length-=l;
+	line_number++;
+	line_pos = 0;	
+}
+
 void removeFromLine()
 {
 	char end_line[momLine->length-line_pos+1];
@@ -120,7 +132,7 @@ void newText()
 			return;
 	}
 	clearText();
-	momLine = addTextLine("\n",NULL);
+	momLine = addTextLine("",NULL);
 	line_number = 1;
 	line_pos = 0;
 	text_changed = 0;
@@ -158,6 +170,8 @@ void loadText(char* filename)
 	pText last = text;
 	while (spReadOneLine(file,buffer,65536) == 0)
 		last = addTextLine(buffer,last);
+	if (last == NULL)
+		last = addTextLine("",last);
 	momLine = text;
 	line_number = 1;
 	line_pos = 0;
@@ -171,6 +185,13 @@ void saveText(char* filename)
 	SDL_RWops *file=SDL_RWFromFile(filename,"w");
 	if (file == NULL)
 		return;
+	int i;
+	for (i = strlen(filename)-1; i >= 0; i--)
+		if (filename[i] == '/')
+			break;
+	i++;
+	sprintf(last_filename,"%s",&filename[i]);
+	sprintf(complete_filename,"%s",filename);
 	pText line = text;
 	while (line)
 	{

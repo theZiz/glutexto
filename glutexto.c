@@ -74,7 +74,7 @@ char dialog_folder[512] = "/usr/local/home";
 int next_in_a_row = 0;
 int time_until_next = 0;
 int blink = 0;
-char enter_buffer[5]=""; //a whole utf8 letter
+char enter_buffer[5]="a"; //a whole utf8 letter
 
 void resize(Uint16 w,Uint16 h);
 void draw_without_flip();
@@ -149,6 +149,9 @@ void draw_without_flip( void )
 		spRectangle(number_width/2-2,editSurface->h/2,0,number_width,editSurface->h,EDIT_NUMBER_BACKGROUND_COLOR);
 	}
 	int lines_per_screen = editSurface->h/(textFont->maxheight+extra);
+	if (spIsKeyboardPolled() && spGetVirtualKeyboardState() == SP_VIRTUAL_KEYBOARD_ALWAYS)
+		lines_per_screen = (editSurface->h-spGetVirtualKeyboard()->h)/(textFont->maxheight+extra);
+	
 	int start_line = line_number - lines_per_screen/3;
 	if (start_line+lines_per_screen+1 > line_count)
 		start_line = line_count-lines_per_screen+1;
@@ -198,18 +201,40 @@ void draw_without_flip( void )
 	spSelectRenderTarget(spGetWindowSurface());
 	spClearTarget( BACKGROUND_COLOR );
 	spBlitSurface( screen->w/2,screen->h/2,0,editSurface);
-	spFontDrawMiddle(screen->w/2,0,0,SP_BUTTON_START_NAME": Main",font);
-	spFontDrawRight(screen->w,0,0,SP_BUTTON_SELECT_NAME": Options",font);
-	spFontDraw(0,0,0,"Glutexto",font);
+	if (last_filename[0] == 0)
+	{
+		if (text_changed)
+			sprintf(buffer,"*Glutexto");
+		else
+			sprintf(buffer,"Glutexto");
+	}
+	else
+	{
+		if (text_changed)
+			sprintf(buffer,"*%s",last_filename);
+		else
+			sprintf(buffer,"%s",last_filename);
+	}
+	spFontDraw(0,0,0,buffer,font);
 
 	if (spIsKeyboardPolled() && spGetVirtualKeyboardState() == SP_VIRTUAL_KEYBOARD_ALWAYS)
 		spBlitSurface(screen->w/2,screen->h-spGetVirtualKeyboard()->h/2-font->maxheight,0,spGetVirtualKeyboard());
 
-	spFontDrawMiddle(screen->w/2,screen->h-font->maxheight,0,\
-		SP_PRACTICE_OK_NAME": Enter    "\
-		SP_PRACTICE_CANCEL_NAME": Finish    "\
-		SP_PRACTICE_3_NAME": Load    "\
-		SP_PRACTICE_4_NAME": Save",font);
+	if (!spIsKeyboardPolled())
+	{
+		spFontDrawMiddle(screen->w/2,0,0,SP_BUTTON_START_NAME": Main",font);
+		spFontDrawRight(screen->w,0,0,SP_BUTTON_SELECT_NAME": Options",font);
+		spFontDrawMiddle(screen->w/2,screen->h-font->maxheight,0,\
+			SP_PRACTICE_OK_NAME": Enter text   "\
+			SP_PRACTICE_3_NAME": Load   "\
+			SP_PRACTICE_4_NAME": Save",font);
+	}
+	else
+		spFontDrawMiddle(screen->w/2,screen->h-font->maxheight,0,\
+			SP_PRACTICE_OK_NAME": Enter letter   "\
+			SP_PRACTICE_CANCEL_NAME": Finish   "\
+			SP_PRACTICE_3_NAME": Return   "\
+			SP_PRACTICE_4_NAME": Backspace",font);
 }
 
 void draw()
@@ -221,124 +246,153 @@ void draw()
 int calc(Uint32 steps)
 {
 	blink += steps;
-	if (time_until_next > 0)
-		time_until_next -= steps;
-	if (spGetInput()->axis[1] < 0 && momLine->prev)
+	if (!spIsKeyboardPolled())
 	{
-		if (time_until_next <= 0)
+		if (time_until_next > 0)
+			time_until_next -= steps;
+		if (spGetInput()->axis[1] < 0 && momLine->prev)
 		{
-			momLine = momLine->prev;
-			line_number--;
-			next_in_a_row++;
-			time_until_next = 300/next_in_a_row;
-			blink = 0;
-			if (line_pos > momLine->length)
-				line_pos = momLine->length;
-		}
-	}
-	else
-	if (spGetInput()->axis[1] > 0 && momLine->next)
-	{
-		if (time_until_next <= 0)
-		{
-			momLine = momLine->next;
-			line_number++;
-			next_in_a_row++;
-			time_until_next = 300/next_in_a_row;
-			blink = 0;
-			if (line_pos > momLine->length)
-				line_pos = momLine->length;
-		}
-	}
-	else
-	if (spGetInput()->button[SP_BUTTON_L] && momLine->prev)
-	{
-		if (time_until_next <= 0)
-		{
-			int i;
-			for (i = 0; i < 32 && momLine->prev; i++)
+			if (time_until_next <= 0)
+			{
 				momLine = momLine->prev;
-			line_number-=i;
-			next_in_a_row++;
-			time_until_next = 300/next_in_a_row;
-			blink = 0;
-			if (line_pos > momLine->length)
-				line_pos = momLine->length;
+				line_number--;
+				next_in_a_row++;
+				time_until_next = 300/next_in_a_row;
+				blink = 0;
+				if (line_pos > momLine->length)
+					line_pos = momLine->length;
+			}
 		}
-	}
-	else
-	if (spGetInput()->button[SP_BUTTON_R] && momLine->next)
-	{
-		if (time_until_next <= 0)
+		else
+		if (spGetInput()->axis[1] > 0 && momLine->next)
 		{
-			int i;
-			for (i = 0; i < 32 && momLine->next; i++)
+			if (time_until_next <= 0)
+			{
 				momLine = momLine->next;
-			line_number+=i;
-			next_in_a_row++;
-			time_until_next = 300/next_in_a_row;
-			blink = 0;
-			if (line_pos > momLine->length)
-				line_pos = momLine->length;
+				line_number++;
+				next_in_a_row++;
+				time_until_next = 300/next_in_a_row;
+				blink = 0;
+				if (line_pos > momLine->length)
+					line_pos = momLine->length;
+			}
 		}
-	}
-	else
-	if (spGetInput()->axis[0] < 0 && line_pos > 0)
-	{
-		if (time_until_next <= 0)
+		else
+		if (spGetInput()->button[SP_BUTTON_L] && momLine->prev)
 		{
-			line_pos--;
-			next_in_a_row++;
-			time_until_next = 300/next_in_a_row;
-			blink = 0;
+			if (time_until_next <= 0)
+			{
+				int i;
+				for (i = 0; i < 32 && momLine->prev; i++)
+					momLine = momLine->prev;
+				line_number-=i;
+				next_in_a_row++;
+				time_until_next = 300/next_in_a_row;
+				blink = 0;
+				if (line_pos > momLine->length)
+					line_pos = momLine->length;
+			}
 		}
-	}
-	else
-	if (spGetInput()->axis[0] > 0 && line_pos < momLine->length)
-	{
-		if (time_until_next <= 0)
+		else
+		if (spGetInput()->button[SP_BUTTON_R] && momLine->next)
 		{
-			line_pos++;
-			next_in_a_row++;
-			time_until_next = 300/next_in_a_row;
-			blink = 0;
+			if (time_until_next <= 0)
+			{
+				int i;
+				for (i = 0; i < 32 && momLine->next; i++)
+					momLine = momLine->next;
+				line_number+=i;
+				next_in_a_row++;
+				time_until_next = 300/next_in_a_row;
+				blink = 0;
+				if (line_pos > momLine->length)
+					line_pos = momLine->length;
+			}
+		}
+		else
+		if (spGetInput()->axis[0] < 0 && line_pos > 0)
+		{
+			if (time_until_next <= 0)
+			{
+				line_pos--;
+				next_in_a_row++;
+				time_until_next = 300/next_in_a_row;
+				blink = 0;
+			}
+		}
+		else
+		if (spGetInput()->axis[0] > 0 && line_pos < momLine->length)
+		{
+			if (time_until_next <= 0)
+			{
+				line_pos++;
+				next_in_a_row++;
+				time_until_next = 300/next_in_a_row;
+				blink = 0;
+			}
+		}
+		else
+		{
+			time_until_next = 0;
+			next_in_a_row = 0;
+		}
+	}
+	if (!spIsKeyboardPolled())
+	{
+		if (spGetInput()->button[SP_BUTTON_START])
+		{
+			spGetInput()->button[SP_BUTTON_START] = 0;
+			main_menu();
+		}
+		if (spGetInput()->button[SP_BUTTON_SELECT])
+		{
+			spGetInput()->button[SP_BUTTON_SELECT] = 0;
+			options_menu();
+		}
+		if (spGetInput()->button[SP_PRACTICE_3])
+		{
+			spGetInput()->button[SP_PRACTICE_3] = 0;
+			load_dialog();
+		}
+		if (spGetInput()->button[SP_PRACTICE_OK])
+		{
+			spGetInput()->button[SP_PRACTICE_OK] = 0;
+			spPollKeyboardInput(enter_buffer,4,SP_PRACTICE_OK_MASK);
 		}
 	}
 	else
 	{
-		time_until_next = 0;
-		next_in_a_row = 0;
+		if (spGetInput()->button[SP_PRACTICE_CANCEL])
+		{
+			spGetInput()->button[SP_PRACTICE_CANCEL] = 0;
+			spStopKeyboardInput();
+		}
+		if (spGetInput()->button[SP_PRACTICE_3])
+		{
+			spGetInput()->button[SP_PRACTICE_3] = 0;
+			momLine = addTextLine("",momLine);
+			line_number++;
+			line_pos = 0;
+		}
+		if (spGetInput()->button[SP_PRACTICE_4])
+		{
+			spGetInput()->button[SP_PRACTICE_4] = 0;
+			enter_buffer[0] = 0;
+		}
 	}
-	if (spGetInput()->button[SP_BUTTON_START])
+	if (enter_buffer[1] != 0)
 	{
-		spGetInput()->button[SP_BUTTON_START] = 0;
-		main_menu();
+		addToLine(&enter_buffer[1]);
+		enter_buffer[0] = 'a';
+		enter_buffer[1] = 0;
+		spGetInput()->keyboard.pos = 1;
 	}
-	if (spGetInput()->button[SP_BUTTON_SELECT])
+	if (enter_buffer[0] == 0)
 	{
-		spGetInput()->button[SP_BUTTON_SELECT] = 0;
-		options_menu();
-	}
-	if (spGetInput()->button[SP_PRACTICE_3])
-	{
-		spGetInput()->button[SP_PRACTICE_3] = 0;
-		load_dialog();
-	}
-	if (spGetInput()->button[SP_PRACTICE_OK])
-	{
-		spGetInput()->button[SP_PRACTICE_OK] = 0;
-		spPollKeyboardInput(enter_buffer,4,SP_PRACTICE_OK_MASK);
-	}
-	if (enter_buffer[0] != 0)
-	{
-		addToLine(enter_buffer);
-		enter_buffer[0] = 0;
-		spGetInput()->keyboard.pos = 0;
-	}
-	if (spGetInput()->button[SP_PRACTICE_CANCEL])
-	{
-		spGetInput()->button[SP_PRACTICE_CANCEL] = 0;
-		spStopKeyboardInput();
+		removeFromLine();
+		enter_buffer[0] = 'a';
+		enter_buffer[1] = 0;
+		spGetInput()->keyboard.pos = 1;
 	}
 	return exit_now;
 }
@@ -356,7 +410,7 @@ void resize(Uint16 w,Uint16 h)
 	font = spFontLoad(FONT_LOCATION,FONT_SIZE*spGetSizeFactor()>>SP_ACCURACY);
 	spFontAdd(font,SP_FONT_GROUP_ASCII""SP_FONT_GROUP_GERMAN,FONT_COLOR);//whole ASCII
 	spFontAddBorder(font,BACKGROUND_COLOR);
-	spFontMulWidth(font,15<<SP_ACCURACY-4);
+	spFontMulWidth(font,14<<SP_ACCURACY-4);
 
 	spFontSetShadeColor(EDIT_BACKGROUND_COLOR);
 	if (fontInverted)
@@ -364,7 +418,7 @@ void resize(Uint16 w,Uint16 h)
 	fontInverted = spFontLoad(FONT_LOCATION,FONT_SIZE*spGetSizeFactor()>>SP_ACCURACY);
 	spFontAdd(fontInverted,SP_FONT_GROUP_ASCII""SP_FONT_GROUP_GERMAN,EDIT_TEXT_COLOR);//whole ASCII
 	spFontAddBorder(fontInverted,EDIT_BACKGROUND_COLOR);
-	spFontMulWidth(fontInverted,15<<SP_ACCURACY-4);
+	spFontMulWidth(fontInverted,14<<SP_ACCURACY-4);
 
 	if (editSurface)
 		spDeleteSurface(editSurface);

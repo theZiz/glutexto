@@ -72,14 +72,57 @@ void addToLine(char* newBuffer)
 	sprintf(&(momLine->line[line_pos]),"%s%s",newBuffer,end_line);
 	momLine->length += l;
 	line_pos += l;
+	text_changed = 1;
 }
+
+void removeFromLine()
+{
+	char end_line[momLine->length-line_pos+1];
+	memcpy(end_line,&(momLine->line[line_pos]),momLine->length-line_pos+1);
+	if (line_pos-1 < 0)
+	{
+		if (momLine->prev)
+		{
+			//Removing myself
+			momLine->prev->next = momLine->next;
+			if (momLine->next)
+				momLine->next->prev = momLine->prev;
+			free(momLine->line);
+			pText prev = momLine->prev;
+			free (momLine);
+			momLine = prev;
+			line_number--;
+			line_count--;
+			int l = momLine->length;
+			line_pos = l;
+			addToLine(end_line);
+			line_pos = l;
+		}
+	}
+	else
+	{
+		line_pos--;
+		sprintf(&(momLine->line[line_pos]),"%s",end_line);
+		momLine->length--;
+		text_changed = 1;
+	}
+}
+
 
 void newText()
 {
+	if (text_changed)
+	{
+		char buffer[1024];
+		sprintf(buffer,"You didn't save\n%s.\nDo you really want to create\na new document?",last_filename);
+		if (ask_yes_no(buffer) == 0)
+			return;
+	}
 	clearText();
 	momLine = addTextLine("\n",NULL);
 	line_number = 1;
 	line_pos = 0;
+	text_changed = 0;
 }
 
 void loadText(char* filename)
@@ -91,7 +134,12 @@ void loadText(char* filename)
 		if (ask_yes_no(buffer) == 0)
 			return;
 	}
-	sprintf(last_filename,"%s",filename);
+	int i;
+	for (i = strlen(filename)-1; i >= 0; i--)
+		if (filename[i] == '/')
+			break;
+	i++;
+	sprintf(last_filename,"%s",&filename[i]);
 	printf("Loading %s...\n",filename);
 	SDL_RWops *file=SDL_RWFromFile(filename,"r");
 	if (file == NULL)
@@ -105,6 +153,7 @@ void loadText(char* filename)
 	line_number = 1;
 	line_pos = 0;
 	SDL_RWclose(file);
+	text_changed = 0;
 }
 
 void saveText(char* filename)
@@ -120,4 +169,5 @@ void saveText(char* filename)
 		line = line->next;
 	}
 	SDL_RWclose(file);
+	text_changed = 0;
 }

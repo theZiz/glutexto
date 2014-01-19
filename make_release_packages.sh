@@ -1,7 +1,7 @@
 #!/bin/sh
 # Change the folder to YOUR sparrow3d folder!
 PROGRAM="glutexto"
-VERSION="1.0.0.0"
+VERSION="1.1.0.0"
 DEST=./build/gcw
 echo "<html>" > index.htm
 echo "<head>" >> index.htm

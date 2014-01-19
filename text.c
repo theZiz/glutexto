@@ -20,15 +20,48 @@ int text_changed = 0;
 char last_filename[512] = "New document";
 char complete_filename[512] = "New document";
 
+int getNumberWidth()
+{
+	if (showLines)
+	{
+		int count = line_count;
+		int max_line = 2;
+		while (count > 0)
+		{
+			count = count/10;
+			max_line++;
+		}
+		char buffer[256];
+		int i;
+		for (i = 0; i < max_line; i++)
+			buffer[i]='8';
+		buffer[i]=0;
+		return spFontWidth(buffer,textFont);
+	}
+	return 0;
+}
+
+void updateWrapLine(pText line)
+{
+	if 	(wrapLines == 0)
+		return;
+	if (line->block)
+		spDeleteTextBlock(line->block);
+	line->block = spCreateTextBlock( line->line, editSurface->w-10-getNumberWidth(), textFont);
+}
+
 void clearText()
 {
 	while (text)
 	{
 		free(text->line);
+		if (text->block)
+			spDeleteTextBlock(text->block);
 		pText next = text->next;
 		free(text);
 		text = next;
 	}
+	textEnd = NULL;
 	line_count = 0;
 	line_number = 0;
 }
@@ -52,8 +85,12 @@ pText addTextLine(char* line,pText after)
 	newText->length = strlen(line);
 	newText->reserved = (newText->length+4)*5/4;
 	newText->line = (char*)malloc(newText->reserved);
+	newText->block = NULL;
+	if (newText->next == NULL);
+		textEnd = newText;
 	memcpy(newText->line,line,newText->length+1);
 	line_count++;
+	updateWrapLine(newText);
 	return newText;
 }
 
@@ -74,6 +111,7 @@ void addToLine(char* newBuffer)
 	momLine->length += l;
 	line_pos += l;
 	text_changed = 1;
+	updateWrapLine(momLine);
 }
 
 
@@ -86,6 +124,8 @@ void addReturn()
 	oldMomLine->length-=l;
 	line_number++;
 	line_pos = 0;	
+	updateWrapLine(momLine);
+	updateWrapLine(oldMomLine);
 }
 
 void removeFromLine()
@@ -97,10 +137,14 @@ void removeFromLine()
 		if (momLine->prev)
 		{
 			//Removing myself
+			if (momLine == textEnd)
+				textEnd = textEnd->prev;
 			momLine->prev->next = momLine->next;
 			if (momLine->next)
 				momLine->next->prev = momLine->prev;
 			free(momLine->line);
+			if (momLine->block)
+				spDeleteTextBlock(momLine->block);
 			pText prev = momLine->prev;
 			free (momLine);
 			momLine = prev;
@@ -118,6 +162,7 @@ void removeFromLine()
 		sprintf(&(momLine->line[line_pos]),"%s",end_line);
 		momLine->length--;
 		text_changed = 1;
+		updateWrapLine(momLine);
 	}
 }
 
@@ -200,4 +245,30 @@ void saveText(char* filename)
 	}
 	SDL_RWclose(file);
 	text_changed = 0;
+}
+
+void updateWrapLines()
+{
+	if (wrapLines)
+	{
+		pText mom = text;
+		while (mom)
+		{
+			updateWrapLine(mom);
+			mom = mom->next;
+		}
+	}
+	else
+	{
+		pText mom = text;
+		while (mom)
+		{
+			if (mom->block)
+			{
+				spDeleteTextBlock(mom->block);
+				mom->block = NULL;
+			}
+			mom = mom->next;
+		}
+	}
 }

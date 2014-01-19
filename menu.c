@@ -182,6 +182,7 @@ int font_change(int action,char* menu_name)
 		textFont = spFontLoad(selectedFont->location,fontSize*spGetSizeFactor()>>SP_ACCURACY);
 		spFontAdd(textFont,SP_FONT_GROUP_ASCII,EDIT_TEXT_COLOR);//whole ASCII
 		save_settings();
+		updateWrapLines();
 	}
 	return 0;
 }
@@ -207,6 +208,7 @@ int size_change(int action,char* menu_name)
 		textFont = spFontLoad(selectedFont->location,fontSize*spGetSizeFactor()>>SP_ACCURACY);
 		spFontAdd(textFont,SP_FONT_GROUP_ASCII,EDIT_TEXT_COLOR);//whole ASCII
 		save_settings();
+		updateWrapLines();
 	}
 	return 0;
 }
@@ -219,9 +221,21 @@ int line_change(int action,char* menu_name)
 	else
 		sprintf(menu_name,"Show lines: No");
 	save_settings();
+	updateWrapLines();
 	return 0;
 }
 
+int wrap_change(int action,char* menu_name)
+{
+	wrapLines = 1-wrapLines;
+	if (wrapLines)
+		sprintf(menu_name,"Wrap lines: Yes");
+	else
+		sprintf(menu_name,"Wrap lines: No");
+	save_settings();
+	updateWrapLines();
+	return 0;
+}
 int menu_load(int action,char* menu_name)
 {
 	if (action == 0)
@@ -281,6 +295,11 @@ void options_menu()
 {
 	char buffer[64];
 	sprintf(menu_name,"Options menu");
+		
+	if (wrapLines)
+		add_menu("Wrap lines: Yes",wrap_change);
+	else
+		add_menu("Wrap lines: No",wrap_change);
 	if (showLines)
 		add_menu("Show lines: Yes",line_change);
 	else

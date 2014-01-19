@@ -66,6 +66,9 @@ void load_settings()
 			if (strstr(buffer,"Show Lines: ") == buffer)
 				showLines = (atoi(value) != 0);
 			else
+			if (strstr(buffer,"Wrap Lines: ") == buffer)
+				wrapLines = (atoi(value) != 0);
+			else
 			if (strstr(buffer,"Font Size: ") == buffer)
 			{
 				fontSize = atoi(value);
@@ -97,6 +100,8 @@ void save_settings()
 	sprintf(buffer,"Font Size: %i",fontSize);
 	spWriteOneLine(file,buffer);
 	sprintf(buffer,"Show Lines: %i",showLines);
+	spWriteOneLine(file,buffer);
+	sprintf(buffer,"Wrap Lines: %i",wrapLines);
 	spWriteOneLine(file,buffer);
 	sprintf(buffer,"Dialog Folder: %s",dialog_folder);
 	spWriteOneLine(file,buffer);

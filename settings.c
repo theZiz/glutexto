@@ -15,7 +15,7 @@
   * For feedback and questions about my Files and Projects please mail me,
   * Alexander Matthes (Ziz) , zizsdl_at_googlemail.com */
 
-#ifdef GCW
+#if defined(GCW) || (defined(X86CPU) && !defined(WIN32))
 char* get_path(char* buffer,char* file)
 {
 	sprintf(buffer,"%s/.config/glutexto",getenv("HOME"),file);

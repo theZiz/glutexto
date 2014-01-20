@@ -47,7 +47,33 @@ void updateWrapLine(pText line)
 		return;
 	if (line->block)
 		spDeleteTextBlock(line->block);
-	line->block = spCreateTextBlock( line->line, editSurface->w-10-getNumberWidth(), textFont);
+	line->block = spCreateTextBlock( line->line, editSurface->w-1-getNumberWidth(), textFont);
+}
+
+void updateWrapLines()
+{
+	if (wrapLines)
+	{
+		pText mom = text;
+		while (mom)
+		{
+			updateWrapLine(mom);
+			mom = mom->next;
+		}
+	}
+	else
+	{
+		pText mom = text;
+		while (mom)
+		{
+			if (mom->block)
+			{
+				spDeleteTextBlock(mom->block);
+				mom->block = NULL;
+			}
+			mom = mom->next;
+		}
+	}
 }
 
 void clearText()
@@ -89,8 +115,12 @@ pText addTextLine(char* line,pText after)
 	if (newText->next == NULL);
 		textEnd = newText;
 	memcpy(newText->line,line,newText->length+1);
+	int old_line_count = getNumberWidth();
 	line_count++;
-	updateWrapLine(newText);
+	if (getNumberWidth() != old_line_count)
+		updateWrapLines();
+	else
+		updateWrapLine(newText);
 	return newText;
 }
 
@@ -247,28 +277,3 @@ void saveText(char* filename)
 	text_changed = 0;
 }
 
-void updateWrapLines()
-{
-	if (wrapLines)
-	{
-		pText mom = text;
-		while (mom)
-		{
-			updateWrapLine(mom);
-			mom = mom->next;
-		}
-	}
-	else
-	{
-		pText mom = text;
-		while (mom)
-		{
-			if (mom->block)
-			{
-				spDeleteTextBlock(mom->block);
-				mom->block = NULL;
-			}
-			mom = mom->next;
-		}
-	}
-}

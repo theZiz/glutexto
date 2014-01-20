@@ -87,6 +87,31 @@ void draw_without_flip();
 #include "dialog.c"
 #include "menu.c"
 
+void search_fonts_in_directoy(char* d_name)
+{
+	spFileListPointer subresult;
+	spFileGetDirectory(&subresult,d_name,0,0);
+	spFileListPointer file = subresult;
+	while (file)
+	{
+		if (strcmp(&file->name[strlen(file->name)-4],".ttf") == 0)
+		{
+			pFont font = (pFont)malloc(sizeof(tFont));
+			char without_ttf[256];
+			sprintf(without_ttf,"%s",file->name);
+			without_ttf[strlen(without_ttf)-4] = 0;
+			if (strcmp(&without_ttf[strlen(without_ttf)-8],"-Regular") == 0)
+				without_ttf[strlen(without_ttf)-8] = 0;
+			sprintf(font->name,"%s",&without_ttf[strlen(d_name)+1]);
+			sprintf(font->location,"%s",file->name);
+			font->next = firstFont;
+			firstFont = font;
+		}
+		file = file->next;
+	}
+	spFileDeleteList(subresult);
+}
+
 void load_fonts()
 {
 	spFileListPointer result;
@@ -95,32 +120,13 @@ void load_fonts()
 	while (directory)
 	{
 		if (directory->type == SP_FILE_DIRECTORY)
-		{
-			spFileListPointer subresult;
-			spFileGetDirectory(&subresult,directory->name,0,0);
-			spFileListPointer file = subresult;
-			while (file)
-			{
-				if (strcmp(&file->name[strlen(file->name)-4],".ttf") == 0)
-				{
-					pFont font = (pFont)malloc(sizeof(tFont));
-					char without_ttf[256];
-					sprintf(without_ttf,"%s",file->name);
-					without_ttf[strlen(without_ttf)-4] = 0;
-					if (strcmp(&without_ttf[strlen(without_ttf)-8],"-Regular") == 0)
-						without_ttf[strlen(without_ttf)-8] = 0;
-					sprintf(font->name,"%s",&without_ttf[strlen(directory->name)+1]);
-					sprintf(font->location,"%s",file->name);
-					font->next = firstFont;
-					firstFont = font;
-				}
-				file = file->next;
-			}
-			spFileDeleteList(subresult);
-		}
+			search_fonts_in_directoy(directory->name);
 		directory = directory->next;
 	}
 	spFileDeleteList(result);
+	char buffer[512];
+	search_fonts_in_directoy(get_path(buffer,"font"));
+	search_fonts_in_directoy(get_path(buffer,"fonts"));
 	selectedFont = firstFont;
 }
 
@@ -190,7 +196,7 @@ void draw_without_flip( void )
 		if (showLines)
 		{
 			if (wrapLines)
-				last_line_count = spFontDrawTextBlock(left,textShift+number_width,i,0,line->block,lines_per_screen*font->maxheight,0,textFont);
+				last_line_count = spFontDrawTextBlock(left,textShift+number_width,i,0,line->block,lines_per_screen*textFont->maxheight,0,textFont);
 			else
 				spFontDraw(textShift+number_width,i,0,line->line,textFont);
 			spSetPattern8(pattern,pattern,pattern,pattern,pattern,pattern,pattern,pattern);
@@ -204,7 +210,7 @@ void draw_without_flip( void )
 		else
 		{
 			if (wrapLines)
-				last_line_count = spFontDrawTextBlock(left,textShift,i,0,line->block,lines_per_screen*font->maxheight,0,textFont);
+				last_line_count = spFontDrawTextBlock(left,textShift,i,0,line->block,lines_per_screen*textFont->maxheight,0,textFont);
 			else
 				spFontDraw(textShift,i,0,line->line,textFont);
 			spSetPattern8(pattern,pattern,pattern,pattern,pattern,pattern,pattern,pattern);
@@ -215,12 +221,12 @@ void draw_without_flip( void )
 		{
 			text_extra += momLineCursorPos;
 			int extra_x = 0;
-			int extra_y = -2;
+			int extra_y = 0;
 			if (wrapLines)
 			{
 				int l_pos = line_pos;
 				int i = 0;
-				while (i < momLine->block->line_count && l_pos > momLine->block->line[i].count)
+				while (i < momLine->block->line_count-1 && l_pos-i > momLine->block->line[i].count) //for every line (i) l_pos have to modified more
 				{
 					extra_x -= momLine->block->line[i].width+space_width;
 					extra_y += textFont->maxheight;
@@ -231,15 +237,15 @@ void draw_without_flip( void )
 			if (!(blink & 512))
 			{
 				spLine(extra_x+textShift+text_extra-1,
-				       extra_y+i+letter->height-font->maxheight,0,
+				       extra_y+i+letter->height-textFont->maxheight,0,
 				       extra_x+textShift+text_extra+2,
-				       extra_y+i+letter->height-font->maxheight,0,EDIT_TEXT_COLOR);
+				       extra_y+i+letter->height-textFont->maxheight,0,EDIT_TEXT_COLOR);
 				spLine(extra_x+textShift+text_extra-1,
 				       extra_y+i+letter->height,0,
 				       extra_x+textShift+text_extra+2,
 				       extra_y+i+letter->height,0,EDIT_TEXT_COLOR);
 				spLine(extra_x+textShift+text_extra,
-				       extra_y+i+letter->height-font->maxheight,0,
+				       extra_y+i+letter->height-textFont->maxheight,0,
 				       extra_x+textShift+text_extra,
 				       extra_y+i+letter->height,0,EDIT_TEXT_COLOR);
 			}
@@ -285,17 +291,40 @@ void draw()
 
 int calc(Uint32 steps)
 {
+	int momBlockLine = 0;
+	int missedLetters = 0;
+	if (wrapLines)
+	{
+		int l_pos = line_pos;
+		int i = 0;
+		while (i < momLine->block->line_count-1 && l_pos > momLine->block->line[i].count)
+		{
+			momBlockLine++;
+			missedLetters+=momLine->block->line[i].count+1; //+space
+			l_pos -= momLine->block->line[i].count;
+			i++;
+		}
+	}
+	int pos_in_line = line_pos - missedLetters;
 	blink += steps;
 	if (!spIsKeyboardPolled())
 	{
 		if (time_until_next > 0)
 			time_until_next -= steps;
-		if (spGetInput()->axis[1] < 0 && momLine->prev)
+		if (spGetInput()->axis[1] < 0)
 		{
 			if (time_until_next <= 0)
 			{
-				momLine = momLine->prev;
-				line_number--;
+				if (wrapLines && momBlockLine > 0)
+					line_pos -= momLine->block->line[momBlockLine-1].count+1;
+				else
+				if (momLine->prev)
+				{
+					momLine = momLine->prev;
+					if (wrapLines)
+						line_pos = momLine->length-(momLine->block->line[momLine->block->line_count-1].count)+pos_in_line;
+					line_number--;
+				}
 				next_in_a_row++;
 				time_until_next = 300/next_in_a_row;
 				blink = 0;
@@ -304,12 +333,19 @@ int calc(Uint32 steps)
 			}
 		}
 		else
-		if (spGetInput()->axis[1] > 0 && momLine->next)
+		if (spGetInput()->axis[1] > 0)
 		{
 			if (time_until_next <= 0)
 			{
-				momLine = momLine->next;
-				line_number++;
+				if (wrapLines && momBlockLine+1 < momLine->block->line_count)
+					line_pos += momLine->block->line[momBlockLine].count+1;
+				else
+				if (momLine->next)
+				{
+					momLine = momLine->next;
+					line_pos = pos_in_line;
+					line_number++;
+				}
 				next_in_a_row++;
 				time_until_next = 300/next_in_a_row;
 				blink = 0;
@@ -350,22 +386,38 @@ int calc(Uint32 steps)
 			}
 		}
 		else
-		if (spGetInput()->axis[0] < 0 && line_pos > 0)
+		if (spGetInput()->axis[0] < 0)
 		{
 			if (time_until_next <= 0)
 			{
-				line_pos--;
+				if (line_pos > 0)
+					line_pos--;
+				else
+				if (momLine->prev)
+				{
+					momLine = momLine->prev;
+					line_number--;
+					line_pos = momLine->length;
+				}
 				next_in_a_row++;
 				time_until_next = 300/next_in_a_row;
 				blink = 0;
 			}
 		}
 		else
-		if (spGetInput()->axis[0] > 0 && line_pos < momLine->length)
+		if (spGetInput()->axis[0] > 0)
 		{
 			if (time_until_next <= 0)
 			{
-				line_pos++;
+				if (line_pos < momLine->length)
+					line_pos++;
+				else
+				if (momLine->next)
+				{
+					momLine = momLine->next;
+					line_number++;
+					line_pos = 0;
+				}
 				next_in_a_row++;
 				time_until_next = 300/next_in_a_row;
 				blink = 0;

@@ -15,6 +15,15 @@ They will appear at next start in the options menu.
 Changelog
 =========
 
+Version 1.3.1:
+* L is Tab now (new)
+* R is Backspace now (new)
+* Y is Space now (changed)
+
+Version 1.3:
+* Added option to draw spaces instead of the <Tab>-Sign
+* Added option to enter spaces instead of Tab (\t)
+
 Version 1.2:
 * Support for showing and entering Tab
 * Support for every letter loaded in a text

@@ -230,6 +230,44 @@ int wrap_change(int action,char* menu_name)
 	updateWrapLines();
 	return 0;
 }
+
+int tab_space_change(int action,char* menu_name)
+{
+	tabs_as_spaces = 1-tabs_as_spaces;
+	if (tabs_as_spaces)
+		sprintf(menu_name,"Insert spaces instead of tab: Yes");
+	else
+		sprintf(menu_name,"Insert spaces instead of tab: No");
+	save_settings();
+	return 0;
+}
+
+int tab_mode_change(int action,char* menu_name)
+{
+	if (action == 1)
+	{
+		if (tab_mode < MAX_TAB_SIZE)
+			tab_mode++;
+	}
+	else
+	if (action == -1)
+	{
+		if (tab_mode > 0)
+			tab_mode--;
+	}
+	if (action != 0)
+	{
+		if (tab_mode)
+			sprintf(menu_name,"Tab Mode: %i Spaces",tab_mode);
+		else
+			sprintf(menu_name,"Tab Mode: \t-Sign");
+		reloadTextFont();
+		save_settings();
+		updateWrapLines();
+	}
+	return 0;
+}
+
 int menu_load(int action,char* menu_name)
 {
 	if (action == 0)
@@ -290,6 +328,15 @@ void options_menu()
 	char buffer[64];
 	sprintf(menu_name,"Options menu");
 		
+	if (tabs_as_spaces)
+		add_menu("Insert spaces instead of tab: Yes",tab_space_change);
+	else
+		add_menu("Insert spaces instead of tab: No",tab_space_change);
+	if (tab_mode)
+		sprintf(buffer,"Tab Mode: %i Spaces",tab_mode);
+	else
+		sprintf(buffer,"Tab Mode: \t-Sign");
+	add_menu(buffer,tab_mode_change);
 	if (wrapLines)
 		add_menu("Wrap lines: Yes",wrap_change);
 	else

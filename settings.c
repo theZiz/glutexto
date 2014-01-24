@@ -69,6 +69,18 @@ void load_settings()
 			if (strstr(buffer,"Wrap Lines: ") == buffer)
 				wrapLines = (atoi(value) != 0);
 			else
+			if (strstr(buffer,"Tab Length: ") == buffer)
+			{
+				tab_mode = atoi(value);
+				if (tab_mode < 0)
+					tab_mode = 0;
+				if (tab_mode > MAX_TAB_SIZE)
+					tab_mode = MAX_TAB_SIZE;
+			}
+			else
+			if (strstr(buffer,"Tabs As Spaces: ") == buffer)
+				tabs_as_spaces = (atoi(value) != 0);
+			else
 			if (strstr(buffer,"Font Size: ") == buffer)
 			{
 				fontSize = atoi(value);
@@ -104,6 +116,10 @@ void save_settings()
 	sprintf(buffer,"Wrap Lines: %i",wrapLines);
 	spWriteOneLine(file,buffer);
 	sprintf(buffer,"Dialog Folder: %s",dialog_folder);
+	spWriteOneLine(file,buffer);
+	sprintf(buffer,"Tab Length: %i",tab_mode);
+	spWriteOneLine(file,buffer);
+	sprintf(buffer,"Tabs As Spaces: %i",tabs_as_spaces);
 	spWriteOneLine(file,buffer);
 	SDL_RWclose(file);
 }

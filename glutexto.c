@@ -28,6 +28,7 @@
 	#undef GCW
 #endif
 
+#define MAX_TAB_SIZE 16
 #define FONT_LOCATION "./font/Chango-Regular.ttf"
 #define FONT_SIZE 7
 #define FONT_COLOR spGetRGB(255,255,255)
@@ -76,7 +77,9 @@ char dialog_folder[512] = "/usr/local/home";
 int next_in_a_row = 0;
 int time_until_next = 0;
 int blink = 0;
-char enter_buffer[5]="a"; //a whole utf8 letter
+char enter_buffer[MAX_TAB_SIZE+2]="a"; //a whole utf8 letter or 8 spaces
+int tab_mode = 0;
+int tabs_as_spaces = 0;
 
 void resize(Uint16 w,Uint16 h);
 void draw_without_flip();
@@ -277,10 +280,12 @@ void draw_without_flip( void )
 	}
 	else
 		spFontDrawMiddle(screen->w/2,screen->h-font->maxheight,0,\
-			SP_PRACTICE_OK_NAME": Enter letter   "\
-			SP_PRACTICE_CANCEL_NAME": Finish   "\
-			SP_PRACTICE_3_NAME": Return   "\
-			SP_PRACTICE_4_NAME": \t",font);
+			SP_PRACTICE_OK_NAME": Press key  "\
+			SP_PRACTICE_CANCEL_NAME": Done  "\
+			SP_PRACTICE_3_NAME": Return  "\
+			SP_PRACTICE_4_NAME": Space  "\
+			SP_BUTTON_L_NAME": \t  "\
+			SP_BUTTON_R_NAME": <-",font);
 }
 
 void draw()
@@ -514,10 +519,31 @@ int calc(Uint32 steps)
 			spGetInput()->button[SP_PRACTICE_3] = 0;
 			addReturn();
 		}
+		if (spGetInput()->button[SP_BUTTON_L])
+		{
+			spGetInput()->button[SP_BUTTON_L] = 0;
+			if (tabs_as_spaces && tab_mode)
+			{
+				int i;
+				for (i = 0; i < tab_mode; i++)
+					enter_buffer[1+i] = ' ';
+				enter_buffer[1+i] = 0;
+			}
+			else
+			{
+				enter_buffer[1] = '\t';
+				enter_buffer[2] = 0;
+			}
+		}
+		if (spGetInput()->button[SP_BUTTON_R])
+		{
+			spGetInput()->button[SP_BUTTON_R] = 0;
+			enter_buffer[0] = 0;
+		}
 		if (spGetInput()->button[SP_PRACTICE_4])
 		{
 			spGetInput()->button[SP_PRACTICE_4] = 0;
-			enter_buffer[1] = '\t';
+			enter_buffer[1] = ' ';
 			enter_buffer[2] = 0;
 		}
 	}

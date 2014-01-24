@@ -25,11 +25,21 @@ void add_tab(spFontPointer font)
 	spFontAddButton(font,'T',"Tab",FONT_COLOR,BACKGROUND_COLOR);
 	spFontAdd(font,"\t",FONT_COLOR);
 	spLetterPointer letter = spFontGetLetter(font,'\t');
-	spLetterPointer button = spFontGetButton(font,'T');
 	if (letter->surface)
 		spDeleteSurface(letter->surface);
-	letter->surface = spCopySurface(button->surface);
-	letter->width = button->width*9/8;
+	if (tab_mode && font == textFont)
+	{
+		spLetterPointer space = spFontGetLetter(font,' ');
+		letter->surface = spCreateSurface(space->width*tab_mode,font->maxheight);
+		SDL_FillRect(letter->surface,NULL,SP_ALPHA_COLOR);
+		letter->width = space->width*tab_mode;
+	}
+	else
+	{
+		spLetterPointer button = spFontGetButton(font,'T');
+		letter->surface = spCopySurface(button->surface);
+		letter->width = button->width*9/8;
+	}
 }
 
 #define MAX_CHARS 65536

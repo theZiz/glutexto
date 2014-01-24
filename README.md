@@ -15,6 +15,10 @@ They will appear at next start in the options menu.
 Changelog
 =========
 
+Version 1.2:
+* Support for showing and entering Tab
+* Support for every letter loaded in a text
+
 Version 1.1:
 * line wrap
 * Removed senseless space between lines

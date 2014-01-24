@@ -177,10 +177,7 @@ int font_change(int action,char* menu_name)
 	if (action != 0)
 	{
 		sprintf(menu_name,"Font: %s",selectedFont->name);
-		if (textFont)
-			spFontDelete(textFont);
-		textFont = spFontLoad(selectedFont->location,fontSize*spGetSizeFactor()>>SP_ACCURACY);
-		spFontAdd(textFont,SP_FONT_GROUP_ASCII,EDIT_TEXT_COLOR);//whole ASCII
+		reloadTextFont();
 		save_settings();
 		updateWrapLines();
 	}
@@ -203,10 +200,7 @@ int size_change(int action,char* menu_name)
 	if (action != 0)
 	{
 		sprintf(menu_name,"Font Size: %i",fontSize);
-		if (textFont)
-			spFontDelete(textFont);
-		textFont = spFontLoad(selectedFont->location,fontSize*spGetSizeFactor()>>SP_ACCURACY);
-		spFontAdd(textFont,SP_FONT_GROUP_ASCII,EDIT_TEXT_COLOR);//whole ASCII
+		reloadTextFont();
 		save_settings();
 		updateWrapLines();
 	}

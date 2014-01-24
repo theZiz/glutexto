@@ -280,7 +280,7 @@ void draw_without_flip( void )
 			SP_PRACTICE_OK_NAME": Enter letter   "\
 			SP_PRACTICE_CANCEL_NAME": Finish   "\
 			SP_PRACTICE_3_NAME": Return   "\
-			SP_PRACTICE_4_NAME": Backspace",font);
+			SP_PRACTICE_4_NAME": \t",font);
 }
 
 void draw()
@@ -316,20 +316,32 @@ int calc(Uint32 steps)
 			if (time_until_next <= 0)
 			{
 				if (wrapLines && momBlockLine > 0)
+				{
 					line_pos -= momLine->block->line[momBlockLine-1].count+1;
+					while ((momLine->line[line_pos] & 192) == 128)
+						line_pos--;
+				}
 				else
 				if (momLine->prev)
 				{
 					momLine = momLine->prev;
 					if (wrapLines)
+					{
 						line_pos = momLine->length-(momLine->block->line[momLine->block->line_count-1].count)+pos_in_line;
+						while ((momLine->line[line_pos] & 192) == 128)
+							line_pos--;
+					}
 					line_number--;
 				}
 				next_in_a_row++;
 				time_until_next = 300/next_in_a_row;
 				blink = 0;
 				if (line_pos > momLine->length)
+				{
 					line_pos = momLine->length;
+					while ((momLine->line[line_pos] & 192) == 128)
+						line_pos--;
+				}
 			}
 		}
 		else
@@ -338,19 +350,29 @@ int calc(Uint32 steps)
 			if (time_until_next <= 0)
 			{
 				if (wrapLines && momBlockLine+1 < momLine->block->line_count)
+				{
 					line_pos += momLine->block->line[momBlockLine].count+1;
+					while ((momLine->line[line_pos] & 192) == 128)
+						line_pos--;
+				}
 				else
 				if (momLine->next)
 				{
 					momLine = momLine->next;
 					line_pos = pos_in_line;
+					while ((momLine->line[line_pos] & 192) == 128)
+						line_pos--;
 					line_number++;
 				}
 				next_in_a_row++;
 				time_until_next = 300/next_in_a_row;
 				blink = 0;
 				if (line_pos > momLine->length)
+				{
 					line_pos = momLine->length;
+					while ((momLine->line[line_pos] & 192) == 128)
+						line_pos--;
+				}
 			}
 		}
 		else
@@ -366,7 +388,11 @@ int calc(Uint32 steps)
 				time_until_next = 300/next_in_a_row;
 				blink = 0;
 				if (line_pos > momLine->length)
+				{
 					line_pos = momLine->length;
+					while ((momLine->line[line_pos] & 192) == 128)
+						line_pos--;
+				}
 			}
 		}
 		else
@@ -382,7 +408,11 @@ int calc(Uint32 steps)
 				time_until_next = 300/next_in_a_row;
 				blink = 0;
 				if (line_pos > momLine->length)
+				{
 					line_pos = momLine->length;
+					while ((momLine->line[line_pos] & 192) == 128)
+						line_pos--;
+				}
 			}
 		}
 		else
@@ -391,13 +421,19 @@ int calc(Uint32 steps)
 			if (time_until_next <= 0)
 			{
 				if (line_pos > 0)
+				{
 					line_pos--;
+					while (line_pos > 0 && (momLine->line[line_pos] & 192) == 128)
+						line_pos--;
+				}
 				else
 				if (momLine->prev)
 				{
 					momLine = momLine->prev;
 					line_number--;
 					line_pos = momLine->length;
+					while ((momLine->line[line_pos] & 192) == 128)
+						line_pos--;
 				}
 				next_in_a_row++;
 				time_until_next = 300/next_in_a_row;
@@ -410,7 +446,16 @@ int calc(Uint32 steps)
 			if (time_until_next <= 0)
 			{
 				if (line_pos < momLine->length)
-					line_pos++;
+				{
+					if (momLine->line[line_pos] & 128)
+					{
+						do
+							line_pos++;
+						while ((momLine->line[line_pos] & 192) == 128);
+					}
+					else
+						line_pos++;
+				}
 				else
 				if (momLine->next)
 				{
@@ -472,7 +517,8 @@ int calc(Uint32 steps)
 		if (spGetInput()->button[SP_PRACTICE_4])
 		{
 			spGetInput()->button[SP_PRACTICE_4] = 0;
-			enter_buffer[0] = 0;
+			enter_buffer[1] = '\t';
+			enter_buffer[2] = 0;
 		}
 	}
 	if (enter_buffer[1] != 0)
@@ -506,6 +552,7 @@ void resize(Uint16 w,Uint16 h)
 	spFontAdd(font,SP_FONT_GROUP_ASCII""SP_FONT_GROUP_GERMAN,FONT_COLOR);//whole ASCII
 	spFontAddBorder(font,BACKGROUND_COLOR);
 	spFontMulWidth(font,14<<SP_ACCURACY-4);
+	add_tab(font);
 
 	spFontSetShadeColor(EDIT_BACKGROUND_COLOR);
 	if (fontInverted)
@@ -514,6 +561,8 @@ void resize(Uint16 w,Uint16 h)
 	spFontAdd(fontInverted,SP_FONT_GROUP_ASCII""SP_FONT_GROUP_GERMAN,EDIT_TEXT_COLOR);//whole ASCII
 	spFontAddBorder(fontInverted,EDIT_BACKGROUND_COLOR);
 	spFontMulWidth(fontInverted,14<<SP_ACCURACY-4);
+	add_tab(fontInverted);
+
 
 	if (editSurface)
 		spDeleteSurface(editSurface);
@@ -533,11 +582,7 @@ void init_glutexto()
 	spSetZTest(0);
 	load_fonts();
 	load_settings();
-	spFontSetShadeColor(EDIT_BACKGROUND_COLOR);
-	if (textFont)
-		spFontDelete(textFont);
-	textFont = spFontLoad(selectedFont->location,fontSize*spGetSizeFactor()>>SP_ACCURACY);
-	spFontAdd(textFont,SP_FONT_GROUP_ASCII,EDIT_TEXT_COLOR);//whole ASCII
+	reloadTextFont();
 	newText();
 }
 

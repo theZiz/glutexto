@@ -20,6 +20,34 @@ int text_changed = 0;
 char last_filename[512] = "New document";
 char complete_filename[512] = "New document";
 
+void add_tab(spFontPointer font)
+{
+	spFontAddButton(font,'T',"Tab",FONT_COLOR,BACKGROUND_COLOR);
+	spFontAdd(font,"\t",FONT_COLOR);
+	spLetterPointer letter = spFontGetLetter(font,'\t');
+	spLetterPointer button = spFontGetButton(font,'T');
+	if (letter->surface)
+		spDeleteSurface(letter->surface);
+	letter->surface = spCopySurface(button->surface);
+	letter->width = button->width*9/8;
+}
+
+#define MAX_CHARS 65536
+char textStringBuffer[MAX_CHARS] = SP_FONT_GROUP_ASCII;
+
+void reloadTextFont()
+{
+	spFontSetShadeColor(EDIT_BACKGROUND_COLOR);
+	if (textFont)
+	{
+		spFontGetLetterString(textFont,textStringBuffer,MAX_CHARS);
+		spFontDelete(textFont);
+	}
+	textFont = spFontLoad(selectedFont->location,fontSize*spGetSizeFactor()>>SP_ACCURACY);
+	spFontAdd(textFont,textStringBuffer,EDIT_TEXT_COLOR);//whole ASCII
+	add_tab(textFont);
+}
+
 int getNumberWidth()
 {
 	if (showLines)
@@ -121,6 +149,7 @@ pText addTextLine(char* line,pText after)
 		updateWrapLines();
 	else
 		updateWrapLine(newText);
+	spFontAdd(textFont,line,EDIT_TEXT_COLOR);
 	return newText;
 }
 
@@ -142,6 +171,7 @@ void addToLine(char* newBuffer)
 	line_pos += l;
 	text_changed = 1;
 	updateWrapLine(momLine);
+	spFontAdd(textFont,newBuffer,EDIT_TEXT_COLOR);
 }
 
 

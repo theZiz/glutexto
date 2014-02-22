@@ -21,7 +21,7 @@ SPARROW_LIB = $(SPARROW_FOLDER)
 endif
 LIB += -L$(SPARROW_LIB)
 INCLUDE += -I$(SPARROW_FOLDER)
-DYNAMIC += -lsparrow3d -lsparrowNet
+DYNAMIC += -lsparrow3d
 
 all: glutexto
 	@echo "=== Built for Target "$(TARGET)" ==="
@@ -31,7 +31,6 @@ targets:
 
 glutexto: glutexto.c menu.c text.c error.c settings.c dialog.c makeBuildDir
 	cp $(SPARROW_LIB)/libsparrow3d.so $(BUILD)
-	cp $(SPARROW_LIB)/libsparrowNet.so $(BUILD)
 	$(CPP) $(CFLAGS) glutexto.c $(SDL) $(INCLUDE) $(LIB) $(STATIC) $(DYNAMIC) -o $(BUILD)/glutexto
 
 makeBuildDir:

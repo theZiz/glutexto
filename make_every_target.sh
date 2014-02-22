@@ -1,8 +1,6 @@
 #!/bin/sh
 # Change the folder to YOUR sparrow3d folder!
 cd ../sparrow3d
-#FILES=./target-files/*
-#The program only makes sense for a couple of targets:
 FILES=./target-files/*
 echo "Compiling for all targets..."
 for f in $FILES

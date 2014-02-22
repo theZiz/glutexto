@@ -1,8 +1,8 @@
 #!/bin/sh
 # Change the folder to YOUR sparrow3d folder!
 PROGRAM="glutexto"
-VERSION="1.3.1.0"
-DEST=./build/gcw
+VERSION="1.3.2.0"
+DEST=./build/*
 echo "<html>" > index.htm
 echo "<head>" >> index.htm
 echo "</head>" >> index.htm
@@ -36,7 +36,7 @@ do
 				if [ $NAME = "gcw" ]; then
 					mksquashfs * "$PROGRAM.opk" -all-root -noappend -no-exports -no-xattrs
 					mv "$PROGRAM.opk" ../..
-					echo "<a href=$PROGRAM.opk type=\"application/x-opk+squashfs\">Download Version $VERSION</a></br>" >> ../../index.htm
+					echo "<a href=$PROGRAM.opk type=\"application/x-opk+squashfs\">$NAME</a></br>" >> ../../index.htm
 				else
 					zip -r "$PROGRAM-$NAME-$VERSION.zip" * > /dev/null
 					mv "$PROGRAM-$NAME-$VERSION.zip" ../..

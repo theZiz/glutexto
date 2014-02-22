@@ -23,6 +23,9 @@
 	#undef X86CPU
 #endif
 #include <sparrow3d.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 #if defined GCW_FEELING && defined TESTING
 	#define X86CPU
 	#undef GCW
@@ -139,7 +142,7 @@ void draw_without_flip( void )
 	spSelectRenderTarget(editSurface);
 	spClearTarget( EDIT_BACKGROUND_COLOR );
 	int i;
-	int pattern = 0b11001100;
+	int pattern = 128+64+8+4;//0b11001100;
 	spLetterPointer letter = spFontGetLetter(textFont,'A');
 	int number_width = getNumberWidth();
 	char buffer[256];

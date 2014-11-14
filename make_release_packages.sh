@@ -1,7 +1,6 @@
 #!/bin/sh
-# Change the folder to YOUR sparrow3d folder!
 PROGRAM="glutexto"
-VERSION="1.3.2.0"
+VERSION="1.3.2.1"
 DEST=./build/*
 echo "<html>" > index.htm
 echo "<head>" >> index.htm
@@ -10,6 +9,7 @@ echo "<body>" >> index.htm
 TIME=`date -u +"%d.%m.%Y %R"`
 echo "Updated at the $TIME." >> index.htm
 echo "<h1>$PROGRAM download links:</h1>" >> index.htm
+echo "<?php" > symlink.php
 for f in $DEST
 do
 	if [ -e "$f/$PROGRAM/$PROGRAM" ]; then
@@ -32,6 +32,8 @@ do
 				tar cfvz "$PROGRAM-$NAME-$VERSION.tar.gz" * > /dev/null
 				mv "$PROGRAM-$NAME-$VERSION.tar.gz" ../..
 				echo "<a href=$PROGRAM-$NAME-$VERSION.tar.gz>$NAME</a></br>" >> ../../index.htm
+				echo "unlink('$PROGRAM-$NAME.tar.gz');" >> ../../symlink.php
+				echo "symlink('$PROGRAM-$NAME-$VERSION.tar.gz', '$PROGRAM-$NAME.tar.gz');" >> ../../symlink.php
 			else
 				if [ $NAME = "gcw" ]; then
 					mksquashfs * "$PROGRAM.opk" -all-root -noappend -no-exports -no-xattrs
@@ -41,6 +43,8 @@ do
 					zip -r "$PROGRAM-$NAME-$VERSION.zip" * > /dev/null
 					mv "$PROGRAM-$NAME-$VERSION.zip" ../..
 					echo "<a href=$PROGRAM-$NAME-$VERSION.zip>$NAME</a></br>" >> ../../index.htm
+					echo "unlink('$PROGRAM-$NAME.zip');" >> ../../symlink.php
+					echo "symlink('$PROGRAM-$NAME-$VERSION.zip', '$PROGRAM-$NAME.zip');" >> ../../symlink.php
 				fi
 			fi
 		fi
@@ -53,5 +57,6 @@ do
 		cd ..
 	fi
 done
+echo "?>" >> symlink.php
 echo "</body>" >> index.htm
 echo "</html>" >> index.htm

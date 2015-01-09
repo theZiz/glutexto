@@ -1,6 +1,6 @@
 #!/bin/sh
 PROGRAM="glutexto"
-VERSION="1.3.2.1"
+VERSION="1.3.2.2"
 DEST=./build/*
 echo "<html>" > index.htm
 echo "<head>" >> index.htm

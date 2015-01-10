@@ -2,7 +2,7 @@ glutexto
 ========
 
 A very simple text editor for gp2x, wiz, caanoo and gcw. It is meant to edit a
-config file, maybe addign a # here and there to comment things in and out. Don't
+config file, maybe adding a # here and there to comment things in and out. Don't
 try to write a book with it. ;)
 Furthermore it is a neat tool to view big logs
 
@@ -17,6 +17,10 @@ Changelog
 
 Version 1.3.2:
 * Unified virtual keyboard button mapping with Sissi
+* Better Icon
+
+Version 1.3.2.1:
+* Fixed little bug in virtual keyboard
 
 Version 1.3.1:
 * L is Tab now (new)

@@ -7,7 +7,7 @@ for f in $FILES
 do
 	cd ../glutexto
 	TARGET=`echo "$f" | cut -d/ -f3 | cut -d. -f1`
-	make clean > /dev/null
+	make oclean > /dev/null
 	make TARGET=$TARGET > /dev/null
 	if [ $? -ne 0 ]; then
 		echo "Error compiling for \033[1;31m$TARGET\033[0m!"
@@ -16,5 +16,5 @@ do
 	fi
 done
 echo "Compiling for default..."
-make clean > /dev/null
+make oclean > /dev/null
 make > /dev/null

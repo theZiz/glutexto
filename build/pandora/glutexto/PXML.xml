@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <PXML xmlns="http://openpandora.org/namespaces/PXML" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="PXML_schema.xsd">
   <package id="glutexto">
-    <version major="1" minor="3" release="2" build="0"/>
+    <version major="1" minor="3" release="2" build="1"/>
     <author name="Ziz" website="http://ziz.openhandhelds.org"/>
     <titles>
       <title lang="en_US">
@@ -39,7 +39,7 @@
     <exec command="./glutexto.sh"/>
     <title lang="en_US">Glutexto</title>
     <author name="Ziz" website="http://ziz.openhandhelds.org"/>
-    <version major="1" minor="3" release="2" build="0"/>
+    <version major="1" minor="3" release="2" build="1"/>
     <osversion major="1" minor="0" release="0" build="0"/>
     <description lang="en_US">A puzzle game. On a tube!</description>
     <icon src="./glutexto.png"/>

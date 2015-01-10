@@ -125,13 +125,18 @@ void load_fonts()
 	spFileListPointer directory = result;
 	while (directory)
 	{
+		printf("Tested %s\n",directory->name);
 		if (directory->type == SP_FILE_DIRECTORY)
+		{
 			search_fonts_in_directoy(directory->name);
+		}
 		directory = directory->next;
 	}
 	spFileDeleteList(result);
 	char buffer[512];
-	search_fonts_in_directoy(get_path(buffer,"font"));
+	#if defined(GCW) || (defined(X86CPU) && !defined(WIN32))
+		search_fonts_in_directoy(get_path(buffer,"font"));
+	#endif
 	search_fonts_in_directoy(get_path(buffer,"fonts"));
 	selectedFont = firstFont;
 }
@@ -284,11 +289,11 @@ void draw_without_flip( void )
 	else
 		spFontDrawMiddle(screen->w/2,screen->h-font->maxheight,0,\
 			SP_PRACTICE_OK_NAME": Press key  "\
-			SP_PRACTICE_CANCEL_NAME": Done  "\
-			SP_PRACTICE_3_NAME": Return  "\
-			SP_PRACTICE_4_NAME": Space  "\
+			SP_PRACTICE_4_NAME": Done  "\
+			SP_BUTTON_R_NAME": Return  "\
+			SP_PRACTICE_3_NAME": Space  "\
 			SP_BUTTON_L_NAME": \t  "\
-			SP_BUTTON_R_NAME": <-",font);
+			SP_PRACTICE_CANCEL_NAME": <-",font);
 }
 
 void draw()
@@ -481,9 +486,6 @@ int calc(Uint32 steps)
 			time_until_next = 0;
 			next_in_a_row = 0;
 		}
-	}
-	if (!spIsKeyboardPolled())
-	{
 		if (spGetInput()->button[SP_BUTTON_START])
 		{
 			spGetInput()->button[SP_BUTTON_START] = 0;
@@ -512,14 +514,14 @@ int calc(Uint32 steps)
 	}
 	else
 	{
-		if (spGetInput()->button[SP_PRACTICE_CANCEL])
+		if (spGetInput()->button[SP_PRACTICE_4])
 		{
-			spGetInput()->button[SP_PRACTICE_CANCEL] = 0;
+			spGetInput()->button[SP_PRACTICE_4] = 0;
 			spStopKeyboardInput();
 		}
-		if (spGetInput()->button[SP_PRACTICE_3])
+		if (spGetInput()->button[SP_BUTTON_R])
 		{
-			spGetInput()->button[SP_PRACTICE_3] = 0;
+			spGetInput()->button[SP_BUTTON_R] = 0;
 			addReturn();
 		}
 		if (spGetInput()->button[SP_BUTTON_L])
@@ -537,17 +539,6 @@ int calc(Uint32 steps)
 				enter_buffer[1] = '\t';
 				enter_buffer[2] = 0;
 			}
-		}
-		if (spGetInput()->button[SP_BUTTON_R])
-		{
-			spGetInput()->button[SP_BUTTON_R] = 0;
-			enter_buffer[0] = 0;
-		}
-		if (spGetInput()->button[SP_PRACTICE_4])
-		{
-			spGetInput()->button[SP_PRACTICE_4] = 0;
-			enter_buffer[1] = ' ';
-			enter_buffer[2] = 0;
 		}
 	}
 	if (enter_buffer[1] != 0)
@@ -598,6 +589,8 @@ void resize(Uint16 w,Uint16 h)
 	editSurface = spCreateSurface(w,h-2*font->maxheight);
 
 	spSetVirtualKeyboard(SP_VIRTUAL_KEYBOARD_ALWAYS,0,h-w*48/320-font->maxheight,w,w*48/320,spLoadSurface("./data/keyboard320.png"),spLoadSurface("./data/keyboardShift320.png"));
+	spSetVirtualKeyboardBackspaceButton(SP_PRACTICE_CANCEL);
+	spSetVirtualKeyboardSpaceButton(SP_PRACTICE_3);
 }
 
 void init_glutexto()

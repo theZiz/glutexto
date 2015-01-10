@@ -18,7 +18,7 @@
 #if defined(GCW) || (defined(X86CPU) && !defined(WIN32))
 char* get_path(char* buffer,char* file)
 {
-	sprintf(buffer,"%s/.config/glutexto",getenv("HOME"),file);
+	sprintf(buffer,"%s/.config/glutexto",getenv("HOME"));
 	spCreateDirectoryChain(buffer);
 	sprintf(buffer,"%s/.config/glutexto/%s",getenv("HOME"),file);
 	return buffer;
@@ -26,7 +26,7 @@ char* get_path(char* buffer,char* file)
 #else
 char* get_path(char* buffer,char* file)
 {
-	sprintf(buffer,".%s",file);
+	sprintf(buffer,"./%s",file);
 	return buffer;
 }
 #endif

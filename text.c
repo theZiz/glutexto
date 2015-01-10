@@ -252,7 +252,7 @@ void newText()
 	line_pos = 0;
 	text_changed = 0;
 	sprintf(last_filename,"New document");
-	sprintf(complete_filename,"");
+	complete_filename[0] = 0;
 }
 
 void loadText(char* filename)

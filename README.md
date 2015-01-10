@@ -15,6 +15,9 @@ They will appear at next start in the options menu.
 Changelog
 =========
 
+Version 1.3.2:
+* Unified virtual keyboard button mapping with Sissi
+
 Version 1.3.1:
 * L is Tab now (new)
 * R is Backspace now (new)

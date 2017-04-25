@@ -37,7 +37,7 @@ targets:
 
 glutexto: glutexto.c menu.c text.c error.c settings.c dialog.c makeBuildDir
 	cp -u $(SPARROW_LIB)/$(SPARROW3D_LIB) $(BUILD)
-	$(CC) $(CFLAGS) glutexto.c $(SDL) $(INCLUDE) $(LIB) $(STATIC) $(DYNAMIC) -o $(BUILD)/glutexto$(SUFFIX)
+	$(CC) $(CFLAGS) $(LINK_FLAGS) glutexto.c $(SDL) $(INCLUDE) $(LIB) $(STATIC) $(DYNAMIC) -o $(BUILD)/glutexto$(SUFFIX)
 
 makeBuildDir:
 	 @if [ ! -d $(BUILD:/glutexto=/) ]; then mkdir $(BUILD:/glutexto=/);fi

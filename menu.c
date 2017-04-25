@@ -54,7 +54,7 @@ void draw_menu()
 		pos+=font->maxheight;
 		item = item->next;
 	}
-	spFontDrawMiddle(screen->w*MENU_WIDTH,screen->h/4+(2+menu_count)*font->maxheight/2,0,SP_PRACTICE_OK_NAME": Choose    "SP_PRACTICE_CANCEL_NAME": Back",font);
+	spFontDrawMiddle(screen->w*MENU_WIDTH,screen->h/4+(2+menu_count)*font->maxheight/2,0,"[o]Choose    [c]Back",font);
 	spFlip();
 }
 

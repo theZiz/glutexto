@@ -15,6 +15,10 @@ They will appear at next start in the options menu.
 Changelog
 =========
 
+Version 1.3.3:
+* Using sparrow3d button hints for control help
+* Fixed WIZ flickering and crash issues
+
 Version 1.3.2:
 * Unified virtual keyboard button mapping with Sissi
 * Better Icon

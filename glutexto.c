@@ -279,21 +279,21 @@ void draw_without_flip( void )
 
 	if (!spIsKeyboardPolled())
 	{
-		spFontDrawMiddle(screen->w/2,0,0,SP_BUTTON_START_NAME": Main",font);
-		spFontDrawRight(screen->w,0,0,SP_BUTTON_SELECT_NAME": Options",font);
+		spFontDrawMiddle(screen->w/2,0,0,"[M]Main",font);
+		spFontDrawRight(screen->w,0,0,"[S]Options",font);
 		spFontDrawMiddle(screen->w/2,screen->h-font->maxheight,0,\
-			SP_PRACTICE_OK_NAME": Enter text   "\
-			SP_PRACTICE_3_NAME": Load   "\
-			SP_PRACTICE_4_NAME": Save",font);
+			"[o]Enter text   "\
+			"[3]Load   "\
+			"[4]Save",font);
 	}
 	else
 		spFontDrawMiddle(screen->w/2,screen->h-font->maxheight,0,\
-			SP_PRACTICE_OK_NAME": Press key  "\
-			SP_PRACTICE_4_NAME": Done  "\
-			SP_BUTTON_R_NAME": Return  "\
-			SP_PRACTICE_3_NAME": Space  "\
-			SP_BUTTON_L_NAME": \t  "\
-			SP_PRACTICE_CANCEL_NAME": <-",font);
+			"[o]Letter  "\
+			"[4]Done  "\
+			"[M]Return  "\
+			"[3]Space  "\
+			"[l]\t  "\
+			"[c]<-",font);
 }
 
 void draw()
@@ -509,7 +509,7 @@ int calc(Uint32 steps)
 		if (spGetInput()->button[SP_PRACTICE_OK])
 		{
 			spGetInput()->button[SP_PRACTICE_OK] = 0;
-			spPollKeyboardInput(enter_buffer,4,SP_PRACTICE_OK_MASK);
+			spPollKeyboardInput(enter_buffer,sizeof(enter_buffer),SP_PRACTICE_OK_MASK);
 		}
 	}
 	else
@@ -573,6 +573,20 @@ void resize(Uint16 w,Uint16 h)
 	spFontAddBorder(font,BACKGROUND_COLOR);
 	spFontMulWidth(font,14<<SP_ACCURACY-4);
 	add_tab(font);
+
+	spFontAddButton( font, 'M', SP_BUTTON_START_NAME, FONT_COLOR, BACKGROUND_COLOR );
+	spFontAddButton( font, 'S', SP_BUTTON_SELECT_NAME, FONT_COLOR, BACKGROUND_COLOR );
+	spFontAddButton( font, 'l', SP_BUTTON_L_NAME, FONT_COLOR, BACKGROUND_COLOR );
+	spFontAddButton( font, 'r', SP_BUTTON_R_NAME, FONT_COLOR, BACKGROUND_COLOR );
+	spFontAddButton( font, 'o', SP_PRACTICE_OK_NAME, FONT_COLOR, BACKGROUND_COLOR );
+	spFontAddButton( font, 'c', SP_PRACTICE_CANCEL_NAME, FONT_COLOR, BACKGROUND_COLOR );
+	spFontAddButton( font, '3', SP_PRACTICE_3_NAME, FONT_COLOR, BACKGROUND_COLOR );
+	spFontAddButton( font, '4', SP_PRACTICE_4_NAME, FONT_COLOR, BACKGROUND_COLOR );
+	spFontAddArrowButton( font, '<', SP_BUTTON_ARROW_LEFT, FONT_COLOR, BACKGROUND_COLOR );
+	spFontAddArrowButton( font, '^', SP_BUTTON_ARROW_UP, FONT_COLOR, BACKGROUND_COLOR );
+	spFontAddArrowButton( font, '>', SP_BUTTON_ARROW_RIGHT, FONT_COLOR, BACKGROUND_COLOR );
+	spFontAddArrowButton( font, 'v', SP_BUTTON_ARROW_DOWN, FONT_COLOR, BACKGROUND_COLOR );
+
 
 	spFontSetShadeColor(EDIT_BACKGROUND_COLOR);
 	if (fontInverted)
